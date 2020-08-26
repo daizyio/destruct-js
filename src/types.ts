@@ -8,7 +8,12 @@ export abstract class NumericDataType implements Instruction {
   public get(buffer: Buffer, offset: number, mode: Mode): number {
     const valueFunction = (mode === Mode.BE) ? this.be : this.le;
     const boundFunction = valueFunction.bind(buffer);
-    return boundFunction(offset);
+    const value = boundFunction(offset);
+    return this.then(value);
+  }
+
+  public then(value: number): number {
+    return value;
   }
 
   get size() {
@@ -52,13 +57,25 @@ export class Int32 extends NumericDataType {
   public bitSize = () => 32;
 }
 
-export class Float extends NumericDataType {
+abstract class FloatingPointDataType extends NumericDataType {
+  private dp: number | null;
+  constructor(options?: any) {
+    super();
+    this.dp = options?.dp;
+  }
+
+  public then(value: number): number {
+    return this.dp ? parseFloat(value.toFixed(this.dp)) : value;
+  }
+}
+
+export class Float extends FloatingPointDataType {
   public be = Buffer.prototype.readFloatBE;
   public le = Buffer.prototype.readFloatLE;
   public bitSize = () => 32;
 }
 
-export class Double extends NumericDataType {
+export class Double extends FloatingPointDataType {
   public be = Buffer.prototype.readDoubleBE;
   public le = Buffer.prototype.readDoubleLE;
   public bitSize = () => 64;

@@ -227,6 +227,18 @@ describe('Float', () => {
     
     expect(result.count).toBe(3.141590118408203);
   });
+
+  it('supports option for decimal places', () => {
+    const spec = new PayloadSpec();
+
+    spec.field('count3dp', Float, { dp: 3 })
+        .field('count1dp', Float, { dp: 1 })
+
+    const result: any = spec.exec(Buffer.from([0x40, 0x49, 0x0F, 0xD0, 0x40, 0x49, 0x0F, 0xD0]));
+    
+    expect(result.count3dp).toBe(3.142);
+    expect(result.count1dp).toBe(3.1);
+  })
 });
 
 describe('Double', () => {
@@ -261,4 +273,17 @@ describe('Double', () => {
     
     expect(result.count).toBe(3.14150000000000018118839761883E0);
   });
+
+  it('supports options for decimal places', () => {
+    const spec = new PayloadSpec();
+
+    spec.field('count3dp', Double, { dp: 3 })
+        .field('count10dp', Double, { dp: 10 })
+
+    const result: any = spec.exec(Buffer.from([0x40, 0x09, 0x21, 0xCA, 0xC0, 0x83, 0x12, 0x6F, 0xC0, 0x8C, 0x36, 0xFA, 0xA0, 0xE9, 0xEF, 0x9A]));
+    
+    expect(result.count3dp).toBe(3.142);
+    expect(result.count10dp).toBe(-902.8723772312);
+
+  })
 });
