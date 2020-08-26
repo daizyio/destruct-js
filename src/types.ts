@@ -16,62 +16,53 @@ export abstract class NumericDataType implements Instruction {
   }
 }
 
-class UnsignedByte extends NumericDataType {
+export class UInt8 extends NumericDataType {
   public be = Buffer.prototype.readUInt8;
   public le = Buffer.prototype.readUInt8;
   public bitSize = () => 8;
 }
 
-class SignedByte extends NumericDataType {
+export class Int8 extends NumericDataType {
   public be = Buffer.prototype.readInt8;
   public le = Buffer.prototype.readInt8;
   public bitSize = () => 8;
 }
 
-class UnsignedWord extends NumericDataType {
+export class UInt16 extends NumericDataType {
   public be = Buffer.prototype.readUInt16BE;
   public le = Buffer.prototype.readUInt16LE;
   public bitSize = () => 16;
 }
 
-class SignedWord extends NumericDataType {
+export class Int16 extends NumericDataType {
   public be = Buffer.prototype.readInt16BE;
   public le = Buffer.prototype.readInt16LE;
   public bitSize = () => 16;
 }
 
-class UnsignedLong extends NumericDataType {
+export class UInt32 extends NumericDataType {
   public be = Buffer.prototype.readUInt32BE;
   public le = Buffer.prototype.readUInt32LE;
   public bitSize = () => 32;
 }
 
-class SignedLong extends NumericDataType {
+export class Int32 extends NumericDataType {
   public be = Buffer.prototype.readInt32BE;
   public le = Buffer.prototype.readInt32LE;
   public bitSize = () => 32;
 }
 
-class SingleFloat extends NumericDataType {
+export class Float extends NumericDataType {
   public be = Buffer.prototype.readFloatBE;
   public le = Buffer.prototype.readFloatLE;
   public bitSize = () => 32;
 }
 
-class DoubleFloat extends NumericDataType {
+export class Double extends NumericDataType {
   public be = Buffer.prototype.readDoubleBE;
   public le = Buffer.prototype.readDoubleLE;
   public bitSize = () => 64;
 }
-
-export const UInt8 = new UnsignedByte();
-export const Int8 = new SignedByte();
-export const UInt16 = new UnsignedWord();
-export const Int16 = new SignedWord();
-export const UInt32 = new UnsignedLong();
-export const Int32 = new SignedLong();
-export const Float = new SingleFloat();
-export const Double = new DoubleFloat();
 
 // export class TextData implements Instruction {
 //   public get(buffer: Buffer, offset: number, mode: Mode) {

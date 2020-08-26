@@ -6,13 +6,13 @@ export class PayloadSpec {
 
   constructor(private mode: Mode = Mode.BE) {}
 
-  public field(name: string, type: Instruction, options?: any): PayloadSpec {
-    this.instructions.push([name, type]);
+  public field(name: string, Type: new () => Instruction, options?: any): PayloadSpec {
+    this.instructions.push([name, new Type()]);
     return this;
   }
 
-  public skip(bytes: number | NumericDataType): PayloadSpec {
-    const skipBytes: number = (typeof bytes === 'number') ? bytes : Math.floor(bytes.bitSize() / 8);
+  public skip(sizable: number | (new () => NumericDataType)): PayloadSpec {
+    const skipBytes: number = (typeof sizable === 'number') ? sizable : Math.floor(new sizable().bitSize() / 8);
     this.instructions.push([null, new SkipInstruction(skipBytes)])
     return this;
   }
