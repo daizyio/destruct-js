@@ -66,5 +66,17 @@ describe('Text', () => {
 
     expect(result.name).toBe('bob');
     expect(result.one).toBe(50);
-  })
+  });
+
+  it('reads to end of buffer if neither size nor terminator is specified', () => {
+    const spec = new PayloadSpec();
+
+    spec.field('one', Int8)
+        .field('name', Text);
+    
+    const result = spec.exec(Buffer.from([0x32, 0x62, 0x6f, 0x62, 0x62, 0x6f, 0x62]));
+
+    expect(result.name).toBe('bobbob');
+    expect(result.one).toBe(50);
+  });
 })
