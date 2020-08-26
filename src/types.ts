@@ -1,12 +1,12 @@
 import { Mode, Instruction } from './payload_spec';
 
 export abstract class NumericDataType implements Instruction {
-  abstract be: (buffer: Buffer) => (offset: number) => any;
-  abstract le: (buffer: Buffer) => (offset: number) => any;
+  abstract be: (offset: number) => any;
+  abstract le: (offset: number) => any;
   abstract bitSize: () => number;
 
   public get(buffer: Buffer, offset: number, mode: Mode): number {
-    const valueFunction = (mode === Mode.BE) ? this.be(buffer) : this.le(buffer);
+    const valueFunction = (mode === Mode.BE) ? this.be : this.le;
     const boundFunction = valueFunction.bind(buffer);
     return boundFunction(offset);
   }
@@ -17,50 +17,50 @@ export abstract class NumericDataType implements Instruction {
 }
 
 class UnsignedByte extends NumericDataType {
-  public be = (buf: Buffer) => { return buf.readUInt8 };
-  public le = (buf: Buffer) => { return buf.readUInt8 };
+  public be = Buffer.prototype.readUInt8;
+  public le = Buffer.prototype.readUInt8;
   public bitSize = () => 8;
 }
 
 class SignedByte extends NumericDataType {
-  public be = (buf: Buffer) => { return buf.readInt8 };
-  public le = (buf: Buffer) => { return buf.readInt8 };
+  public be = Buffer.prototype.readInt8;
+  public le = Buffer.prototype.readInt8;
   public bitSize = () => 8;
 }
 
 class UnsignedWord extends NumericDataType {
-  public be = (buf: Buffer) => { return buf.readUInt16BE };
-  public le = (buf: Buffer) => { return buf.readUInt16LE };
+  public be = Buffer.prototype.readUInt16BE;
+  public le = Buffer.prototype.readUInt16LE;
   public bitSize = () => 16;
 }
 
 class SignedWord extends NumericDataType {
-  public be = (buf: Buffer) => { return buf.readInt16BE };
-  public le = (buf: Buffer) => { return buf.readInt16LE };
+  public be = Buffer.prototype.readInt16BE;
+  public le = Buffer.prototype.readInt16LE;
   public bitSize = () => 16;
 }
 
 class UnsignedLong extends NumericDataType {
-  public be = (buf: Buffer) => { return buf.readUInt32BE };
-  public le = (buf: Buffer) => { return buf.readUInt32LE };
+  public be = Buffer.prototype.readUInt32BE;
+  public le = Buffer.prototype.readUInt32LE;
   public bitSize = () => 32;
 }
 
 class SignedLong extends NumericDataType {
-  public be = (buf: Buffer) => { return buf.readInt32BE };
-  public le = (buf: Buffer) => { return buf.readInt32LE };
+  public be = Buffer.prototype.readInt32BE;
+  public le = Buffer.prototype.readInt32LE;
   public bitSize = () => 32;
 }
 
 class SingleFloat extends NumericDataType {
-  public be = (buf: Buffer) => { return buf.readFloatBE };
-  public le = (buf: Buffer) => { return buf.readFloatLE };
+  public be = Buffer.prototype.readFloatBE;
+  public le = Buffer.prototype.readFloatLE;
   public bitSize = () => 32;
 }
 
 class DoubleFloat extends NumericDataType {
-  public be = (buf: Buffer) => { return buf.readDoubleBE };
-  public le = (buf: Buffer) => { return buf.readDoubleLE };
+  public be = Buffer.prototype.readDoubleBE;
+  public le = Buffer.prototype.readDoubleLE;
   public bitSize = () => 64;
 }
 
