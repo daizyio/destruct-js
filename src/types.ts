@@ -85,15 +85,28 @@ type Encoding = 'ascii' | 'utf8' | 'utf-8' | 'utf16le' | 'ucs2' | 'ucs-2' | 'bas
 
 export class Text implements Instruction {
   private _size: number;
+  private terminator: number;
   private encoding: Encoding;
 
   constructor(options?: any) {
     this._size = options?.size;
     this.encoding = options?.encoding || 'utf8';
+    this.terminator = options?.terminator;
   }
 
   public get(buffer: Buffer, offset: number, mode: Mode) {
-    return buffer.slice(offset, offset + this._size).toString(this.encoding);
+    const startingBuffer = buffer.slice(offset);
+    let workingBuffer: Buffer = startingBuffer;
+    if (this._size) {
+      workingBuffer = startingBuffer.slice(0, this._size);
+    } else if (this.terminator != null) {
+      const index = startingBuffer.findIndex(b => b == this.terminator);
+      if (index > -1) {
+        this._size = index + 1;
+        workingBuffer = startingBuffer.slice(0, index);
+      }
+    }
+    return workingBuffer.toString(this.encoding);
   }
 
   get size() {

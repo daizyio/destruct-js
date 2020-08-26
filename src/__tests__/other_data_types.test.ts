@@ -55,4 +55,16 @@ describe('Text', () => {
 
     expect(result.imei).toBe('3619243312521010');
   })
+
+  it('can specify a terminator', () => {
+    const spec = new PayloadSpec();
+
+    spec.field('name', Text, { terminator: 0x00 })
+        .field('one', Int8);
+    
+    const result = spec.exec(Buffer.from([0x62, 0x6f, 0x62, 0x00, 0x32]));
+
+    expect(result.name).toBe('bob');
+    expect(result.one).toBe(50);
+  })
 })
