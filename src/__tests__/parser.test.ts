@@ -195,9 +195,7 @@ describe('Data types', () => {
       expect(result.count).toBe(-13624928);
     });
   });
-
 });
-
 
 describe('A PayloadSpec', () => {
   describe('skip', () => {
@@ -215,7 +213,7 @@ describe('A PayloadSpec', () => {
       expect(result.count).toBe(22);
       expect(result.temp).toBe(127);
       expect(result.humidity).toBe(1);
-    })
+    });
 
     it('skips the size of the passed data type', () => {
       const spec = new PayloadSpec();
@@ -232,6 +230,24 @@ describe('A PayloadSpec', () => {
       expect(result.count).toBe(22);
       expect(result.temp).toBe(127);
       expect(result.humidity).toBe(1);
+    })
+  });
+
+  describe('endianness', () => {
+    it('can switch enddianness', () => {
+      const spec = new PayloadSpec(Mode.BE);
+
+      spec.field('countBE', UInt16)
+          .endianness(Mode.LE)
+          .field('countLE', UInt16)
+          .endianness(Mode.BE)
+          .field('countBE2', UInt16)
+
+      const result: any = spec.exec(Buffer.from([0xFF, 0x30, 0x30, 0xFF, 0xFF, 0x30]))
+      
+      expect(result.countBE).toBe(65328);
+      expect(result.countLE).toBe(65328);
+      expect(result.countBE2).toBe(65328);
     })
   })
 

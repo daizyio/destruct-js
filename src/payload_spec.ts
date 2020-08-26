@@ -17,6 +17,11 @@ export class PayloadSpec {
     return this;
   }
 
+  public endianness(mode: Mode): PayloadSpec {
+    this.instructions.push([null, new EndiannessInstruction(mode)]);
+    return this;
+  }
+
   public exec(data: Buffer): any {
     const reader = new BufferReader(data, this.mode);
     const result: any = {};
@@ -53,16 +58,30 @@ class NumberField implements Instruction {
   }
 }
 
-class SkipInstruction implements Instruction {
-
-  constructor(private bytes: number) {}
-
+class NullInstruction implements Instruction {
   public get(buffer: Buffer): (offset: number) => number | string | null {
     return (offset: number) => null;
   }
 
   get size() {
+    return 0;
+  }
+}
+
+class SkipInstruction extends NullInstruction {
+
+  constructor(private bytes: number) {
+    super();
+  }
+
+  get size() {
     return this.bytes;
+  }
+}
+
+class EndiannessInstruction extends NullInstruction {
+  constructor(public mode: Mode) {
+    super();
   }
 }
 
@@ -76,7 +95,12 @@ class BufferReader {
 
   constructor(private buffer: Buffer, private mode: Mode = Mode.BE) {}
 
-  public read(instruction: Instruction) {
+  public read(instruction: Instruction): number | string | null {
+    if (instruction instanceof EndiannessInstruction) {
+      this.mode = instruction.mode;
+      return null;
+    }
+
     const extract = instruction.get(this.buffer, this.mode).bind(this.buffer);
     const value = extract(this.byteOffset);
 
