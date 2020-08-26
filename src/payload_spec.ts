@@ -6,7 +6,7 @@ export class PayloadSpec {
 
   constructor(private mode: Mode = Mode.BE) {}
 
-  public field(name: string, type: NumericDataType): PayloadSpec {
+  public field(name: string, type: NumericDataType, options?: any): PayloadSpec {
     this.instructions.push([name, new NumberField(type)]);
     return this;
   }
@@ -38,19 +38,15 @@ export class PayloadSpec {
 }
 
 interface Instruction {
-  get(buffer: Buffer, mode?: Mode): (offset: number) => number | string | null;
+  get(buffer: Buffer, offset: number, mode?: Mode): any;
   readonly size: number;
 }
 
 class NumberField implements Instruction {
   constructor(private type: NumericDataType) {}
 
-  public get(buffer: Buffer, mode: Mode = Mode.BE): (offset: number) => number | string {
-    if (mode === Mode.BE) {
-      return this.type.be(buffer);
-    } else {
-      return this.type.le(buffer);
-    }
+  public get(buffer: Buffer, offset: number, mode: Mode = Mode.BE): number {
+    return this.type.get(buffer, offset, mode);
   }
 
   get size() {
@@ -101,8 +97,7 @@ class BufferReader {
       return null;
     }
 
-    const extract = instruction.get(this.buffer, this.mode).bind(this.buffer);
-    const value = extract(this.byteOffset);
+    const value = instruction.get(this.buffer, this.byteOffset, this.mode);
 
     this.byteOffset += instruction.size;
     return value;
