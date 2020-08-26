@@ -4,18 +4,21 @@ export class PayloadSpec {
 
   private instructions: [string | null, Instruction][] = [];
 
+  constructor(private mode: Mode = Mode.BE) {}
+
   public field(name: string, type: NumericDataType): PayloadSpec {
     this.instructions.push([name, new NumberField(type)]);
     return this;
   }
 
-  public skip(bytes: number): PayloadSpec {
-    this.instructions.push([null, new SkipInstruction(bytes)])
+  public skip(bytes: number | NumericDataType): PayloadSpec {
+    const skipBytes: number = (typeof bytes === 'number') ? bytes : Math.floor(bytes.bitSize() / 8);
+    this.instructions.push([null, new SkipInstruction(skipBytes)])
     return this;
   }
 
   public exec(data: Buffer): any {
-    const reader = new BufferReader(data);
+    const reader = new BufferReader(data, this.mode);
     const result: any = {};
     for(const instruction of this.instructions) {
       const value = reader.read(instruction[1]);
@@ -63,16 +66,15 @@ class SkipInstruction implements Instruction {
   }
 }
 
-enum Mode {
+export enum Mode {
   BE,
   LE
 }
 
 class BufferReader {
   private byteOffset: number = 0;
-  private mode: Mode = Mode.BE;
 
-  constructor(private buffer: Buffer) {}
+  constructor(private buffer: Buffer, private mode: Mode = Mode.BE) {}
 
   public read(instruction: Instruction) {
     const extract = instruction.get(this.buffer, this.mode).bind(this.buffer);
