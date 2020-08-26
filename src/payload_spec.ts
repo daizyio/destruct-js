@@ -6,8 +6,8 @@ export class PayloadSpec {
 
   constructor(private mode: Mode = Mode.BE) {}
 
-  public field(name: string, Type: new () => Instruction, options?: any): PayloadSpec {
-    this.instructions.push([name, new Type()]);
+  public field(name: string, Type: new (options?: any) => Instruction, options?: any): PayloadSpec {
+    this.instructions.push([name, new Type(options)]);
     return this;
   }
 

@@ -64,14 +64,22 @@ export class Double extends NumericDataType {
   public bitSize = () => 64;
 }
 
-// export class TextData implements Instruction {
-//   public get(buffer: Buffer, offset: number, mode: Mode) {
-//     throw new Error('Method not implemented.');
-//   }
+type Encoding = 'ascii' | 'utf8' | 'utf-8' | 'utf16le' | 'ucs2' | 'ucs-2' | 'base64' | 'binary' | 'hex' | 'latin1';
 
-//   get size() {
-//     return 0;
-//   }
-// }
+export class Text implements Instruction {
+  private _size: number;
+  private encoding: Encoding;
 
-// export const Text = new TextData();
+  constructor(options?: any) {
+    this._size = options?.size;
+    this.encoding = options?.encoding || 'utf8';
+  }
+
+  public get(buffer: Buffer, offset: number, mode: Mode) {
+    return buffer.slice(offset, offset + this._size).toString(this.encoding);
+  }
+
+  get size() {
+    return this._size;
+  }
+}
