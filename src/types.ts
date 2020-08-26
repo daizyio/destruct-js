@@ -1,6 +1,6 @@
-import { Mode } from './payload_spec';
+import { Mode, Instruction } from './payload_spec';
 
-export abstract class NumericDataType {
+export abstract class NumericDataType implements Instruction {
   abstract be: (buffer: Buffer) => (offset: number) => any;
   abstract le: (buffer: Buffer) => (offset: number) => any;
   abstract bitSize: () => number;
@@ -9,6 +9,10 @@ export abstract class NumericDataType {
     const valueFunction = (mode === Mode.BE) ? this.be(buffer) : this.le(buffer);
     const boundFunction = valueFunction.bind(buffer);
     return boundFunction(offset);
+  }
+
+  get size() {
+    return Math.floor(this.bitSize() / 8);
   }
 }
 
@@ -68,3 +72,15 @@ export const UInt32 = new UnsignedLong();
 export const Int32 = new SignedLong();
 export const Float = new SingleFloat();
 export const Double = new DoubleFloat();
+
+// export class TextData implements Instruction {
+//   public get(buffer: Buffer, offset: number, mode: Mode) {
+//     throw new Error('Method not implemented.');
+//   }
+
+//   get size() {
+//     return 0;
+//   }
+// }
+
+// export const Text = new TextData();
