@@ -2,28 +2,28 @@ import { NumericDataType } from './types';
 
 export class PayloadSpec {
 
-  private instructions: InstructionList = [];
+  private instructions: Instruction[] = [];
 
   constructor(private mode: Mode = Mode.BE) {}
 
   public field(name: string, Type: new (name: string | null, options?: any) => Instruction, options?: any): PayloadSpec {
-    this.instructions.push([name, new Type(name, options)]);
+    this.instructions.push(new Type(name, options));
     return this;
   }
 
   public fetch(name: string, Type: new (name: string | null, options?: any) => Instruction, options?: any): PayloadSpec {
-    this.instructions.push([name, new Ignorable(new Type(name, options))]);
+    this.instructions.push(new Ignorable(new Type(name, options)));
     return this;
   }
 
   public skip(sizable: number | (new () => NumericDataType)): PayloadSpec {
     const skipBytes: number = (typeof sizable === 'number') ? sizable : Math.floor(new sizable().bitSize() / 8);
-    this.instructions.push([null, new SkipInstruction(skipBytes)])
+    this.instructions.push(new SkipInstruction(skipBytes))
     return this;
   }
 
   public endianness(mode: Mode): PayloadSpec {
-    this.instructions.push([null, new EndiannessInstruction(mode)]);
+    this.instructions.push(new EndiannessInstruction(mode));
     return this;
   }
 
@@ -34,11 +34,10 @@ export class PayloadSpec {
   }
 }
 
-type InstructionList = [string | null, Instruction][];
-
 export interface Instruction {
   get(buffer: Buffer, offset: number, result: any, mode?: Mode): any;
   readonly size: number;
+  readonly name: string | null;
 }
 
 class Ignorable implements Instruction {
@@ -51,6 +50,10 @@ class Ignorable implements Instruction {
   get size(): number {
     return this.inst.size;
   }
+
+  get name(): string | null {
+    return this.inst.name;
+  }
 }
 
 class NullInstruction implements Instruction {
@@ -60,6 +63,10 @@ class NullInstruction implements Instruction {
 
   get size() {
     return 0;
+  }
+
+  get name(): string | null {
+    return null;
   }
 }
 
@@ -88,20 +95,20 @@ export enum Mode {
 class BufferReader {
   private byteOffset: number = 0;
   
-  constructor(private _mode: Mode = Mode.BE, private instructions: InstructionList) {}
+  constructor(private _mode: Mode = Mode.BE, private instructions: Instruction[]) {}
   
   public read(buffer: Buffer): any {
     const result: any = {};
 
-    for(const [name, instruction] of this.instructions) {
+    for(const instruction of this.instructions) {
       if (instruction instanceof EndiannessInstruction) {
         this.mode = instruction.mode;
         continue;
       }
 
       const value = instruction.get(buffer, this.byteOffset, result, this.mode);
-      if (name) {
-        result[name] = value;
+      if (instruction.name) {
+        result[instruction.name] = value;
       }
       this.byteOffset += instruction.size;
     }

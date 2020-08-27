@@ -3,12 +3,16 @@ import { Mode, Instruction } from './payload_spec';
 abstract class ThenableInstruction implements Instruction {
   private _then: (value: any) => any;
 
-  constructor(private name: string | null, options?: any) {
+  constructor(private _name: string | null, options?: any) {
     this._then = options?.then;
   }
 
   abstract get(buffer: Buffer, offset: number, result: any, mode?: Mode | undefined): number | string;
   abstract size: number;
+  
+  get name() {
+    return this._name;
+  }
 
   public then(value: any): any {
     if (this._then) {
