@@ -1,5 +1,5 @@
 import { PayloadSpec, Mode } from '../payload_spec';
-import { UInt8, Int8, UInt16, Float, UInt32, Text } from '../types';
+import { UInt8, Int8, UInt16, Float, UInt32, Text, Bit } from '../types';
 
 describe('Simple fields', () => {
   it('reads fields in order from the buffer', () => {
@@ -133,5 +133,18 @@ describe('deriving a field', () => {
         .exec(Buffer.from([0x02, 0x04]))
 
     expect(result.total).toBe(8);
+  })
+})
+
+describe('padding', () => {
+  it('can be used to align to the byte boundary', () => {
+    const result =
+      new PayloadSpec()
+        .field('enabled', Bit).pad()
+        .field('count', Int8)
+        .exec(Buffer.from([0x80, 0x02]))
+    
+    expect(result.enabled).toBe(true);
+    expect(result.count).toBe(2);
   })
 })

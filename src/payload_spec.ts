@@ -27,6 +27,11 @@ export class PayloadSpec {
     return this;
   }
 
+  public pad(): PayloadSpec {
+    this.instructions.push(new PadInstruction());
+    return this;
+  }
+
   public endianness(mode: Mode): PayloadSpec {
     this.instructions.push(new EndiannessInstruction(mode));
     return this;
@@ -98,6 +103,20 @@ class SkipInstruction extends NullInstruction {
 class EndiannessInstruction extends NullInstruction {
   constructor(public mode: Mode) {
     super();
+  }
+}
+
+class PadInstruction extends NullInstruction {
+  private _size: number = 0;
+
+  public execute(buffer: Buffer, readerState: ReaderState): any {
+    const bitsToPad = 8 - readerState.offset.bits;
+    this._size = bitsToPad;
+    return null;
+  }
+
+  get size() {
+    return this._size;
   }
 }
 

@@ -1,5 +1,5 @@
 import { PayloadSpec, Mode } from '../payload_spec';
-import { UInt32, UInt8, Float, Text, UInt16 } from '../types';
+import { UInt32, UInt8, Float, Text, UInt16, Bit, Int8 } from '../types';
 
 describe('Documentation examples', () => {
   test('The quick start', () => {
@@ -29,6 +29,20 @@ describe('Documentation examples', () => {
     expect(result.count1dp).toBe(3.1);
   })
 
+  test('Bit example', () => {
+    const result = 
+      new PayloadSpec()
+        .field('enabled', Bit)
+        .field('ledOff', Bit)
+        .field('releaseTheHounds', Bit)
+        .exec(Buffer.from([0xA0]));
+
+    expect(result.enabled).toBe(true);
+    expect(result.ledOff).toBe(false);
+    expect(result.releaseTheHounds).toBe(true);
+
+  })
+  
   test('fixed size text', () => {
     const result = 
       new PayloadSpec()
@@ -100,5 +114,27 @@ describe('Documentation examples', () => {
 
     expect(result.firstByte).toBe(255);
     expect(result.ignoreMe).toBeUndefined();
+  })
+  
+  test('derive example', () => {
+    const result =
+      new PayloadSpec()
+        .field('count', Int8)
+        .derive('doubleCount', (r) => r.count * 2)
+        .exec(Buffer.from([0x02]))
+
+      expect(result.count).toBe(2);
+      expect(result.doubleCount).toBe(4);
+  })
+
+  test('pad example', () => {
+    const result =
+      new PayloadSpec()
+        .field('enabled', Bit).pad()
+        .field('count', Int8)
+        .exec(Buffer.from([0x80, 0x02]))
+    
+    expect(result.enabled).toBe(true);
+    expect(result.count).toBe(2);
   })
 })

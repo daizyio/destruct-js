@@ -53,6 +53,24 @@ expect(result.count3dp).toBe(3.142);
 expect(result.count1dp).toBe(3.1);
 ```
 
+Bit
+---
+
+The `Bit` type reads a single bit from the buffer, as a boolean value
+
+```
+const result = 
+    new PayloadSpec()
+      .field('enabled', Bit)
+      .field('ledOff', Bit)
+      .field('releaseTheHounds', Bit)
+      .exec(Buffer.from([0xA0]));
+
+expect(result.enabled).toBe(true);
+expect(result.ledOff).toBe(false);
+expect(result.releaseTheHounds).toBe(true);
+```
+
 Text
 ---
 
@@ -110,7 +128,7 @@ Other instructions
 
 As well as specifying fields using `.field()`, you can use other instructions to modify behaviour of the parser.
 
-`skip(number | NumericDataType)` - skips the specified number of bytes, or the size of the specified numeric data type.
+`skip(bytes: number | NumericDataType)` - skips the specified number of bytes, or the size of the specified numeric data type.
 
 ```
 const result = 
@@ -124,7 +142,7 @@ expect(result.firstByte).toBe(255);
 expect(result.lastByte).toBe(1);
 ```
 
-`endianness(Mode)` - switches the buffer to reading the specified endianness *from this point* i.e. it does not apply to previously read values.
+`endianness(mode: Mode)` - switches the buffer to reading the specified endianness *from this point* i.e. it does not apply to previously read values.
 
 ```
 const result = 
@@ -138,7 +156,7 @@ expect(result.countBE).toBe(65328);
 expect(result.countLE).toBe(65328);
 ```
 
-`store(string, DataType)` - fetches a value from the buffer in the same way as `.field()`, but stores the value internally instead of adding to the final output. `.fetch()` can be used in combination with `.store()` to use values in later calculations.
+`store(name: string, type: DataType)` - fetches a value from the buffer in the same way as `.field()`, but stores the value internally instead of adding to the final output. `.store()` can be used in combination with `.derive()` to use values in later calculations.
 
 ```
 const result = 
@@ -149,4 +167,30 @@ const result =
 
 expect(result.firstByte).toBe(255);
 expect(result.ignoreMe).toBeUndefined();
+```
+
+`derive(name: string, valueFunction: (r: any) => any)` - calculates a value to add to the result, potentially using values already read from the buffer. The `valueFunction` will be passed an object containing all `field` and `store`d values that have been read to this point.
+
+```
+const result =
+  new PayloadSpec()
+    .field('count', Int8)
+    .derive('doubleCount', (r) => r.count * 2)
+    .exec(Buffer.from([0x02]))
+
+  expect(result.count).toBe(2);
+  expect(result.doubleCount).toBe(4);
+```
+
+`pad()` - moves the buffer position to the next byte boundary, for example if you've read a number of `Bit`s
+
+```
+const result =
+  new PayloadSpec()
+    .field('enabled', Bit).pad()
+    .field('count', Int8)
+    .exec(Buffer.from([0x80, 0x02]))
+
+expect(result.enabled).toBe(true);
+expect(result.count).toBe(2);
 ```
