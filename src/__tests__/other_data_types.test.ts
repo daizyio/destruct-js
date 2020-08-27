@@ -79,4 +79,14 @@ describe('Text', () => {
     expect(result.name).toBe('bobbob');
     expect(result.one).toBe(50);
   });
+
+  it('supports then function to do conversions', () => {
+    const spec = new PayloadSpec();
+
+    spec.field('number', Text, { then: parseInt });
+
+    const result = spec.exec(Buffer.from([0x31, 0x32, 0x33]))
+
+    expect(result.number).toBe(123);
+  })
 })

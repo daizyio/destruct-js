@@ -34,6 +34,16 @@ describe('UInt8', () => {
     const result: any = spec.exec(Buffer.from([0x30]));
     
     expect(result.count).toBe(48);
+  });
+
+  it('supports a then operation', () => {
+    const spec = new PayloadSpec();
+
+    spec.field('count', UInt8, { then: (value: number) => value + 10 });
+
+    const result: any = spec.exec(Buffer.from([0x10]));
+
+    expect(result.count).toBe(26);
   })
 })
 
@@ -56,6 +66,16 @@ describe('Int8', () => {
     const result: any = spec.exec(Buffer.from([0x30]));
     
     expect(result.count).toBe(48);
+  })
+
+  it('supports a then operation', () => {
+    const spec = new PayloadSpec();
+
+    spec.field('count', Int8, { then: (value: number) => value + 10 });
+
+    const result: any = spec.exec(Buffer.from([0xA0]));
+
+    expect(result.count).toBe(-86);
   })
 });
 
@@ -91,6 +111,7 @@ describe('UInt16', () => {
     
     expect(result.count).toBe(65328);
   });
+  
 });
 
 describe('Int16', () => {

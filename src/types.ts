@@ -1,6 +1,24 @@
 import { Mode, Instruction } from './payload_spec';
 
-export abstract class NumericDataType implements Instruction {
+abstract class ThenableInstruction implements Instruction {
+  private _then: (value: any) => any;
+
+  constructor(options?: any) {
+    this._then = options?.then;
+  }
+  abstract get(buffer: Buffer, offset: number, mode?: Mode | undefined): number | string;
+  abstract size: number;
+
+  public then(value: any): any {
+    if (this._then) {
+      return this._then(value);
+    } else {
+      return value;
+    }
+  }
+}
+
+export abstract class NumericDataType extends ThenableInstruction {
   abstract be: (offset: number) => any;
   abstract le: (offset: number) => any;
   abstract bitSize: () => number;
@@ -10,10 +28,6 @@ export abstract class NumericDataType implements Instruction {
     const boundFunction = valueFunction.bind(buffer);
     const value = boundFunction(offset);
     return this.then(value);
-  }
-
-  public then(value: number): number {
-    return value;
   }
 
   get size() {
@@ -83,12 +97,13 @@ export class Double extends FloatingPointDataType {
 
 type Encoding = 'ascii' | 'utf8' | 'utf-8' | 'utf16le' | 'ucs2' | 'ucs-2' | 'base64' | 'binary' | 'hex' | 'latin1';
 
-export class Text implements Instruction {
+export class Text extends ThenableInstruction {
   private _size: number;
   private terminator: number;
   private encoding: Encoding;
 
   constructor(options?: any) {
+    super(options);
     this._size = options?.size;
     this.encoding = options?.encoding || 'utf8';
     this.terminator = options?.terminator;
@@ -106,7 +121,7 @@ export class Text implements Instruction {
         workingBuffer = startingBuffer.slice(0, index);
       }
     }
-    return workingBuffer.toString(this.encoding);
+    return this.then(workingBuffer.toString(this.encoding));
   }
 
   get size() {
