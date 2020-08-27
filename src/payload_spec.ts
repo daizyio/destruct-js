@@ -16,8 +16,8 @@ export class PayloadSpec {
     return this;
   }
 
-  public skip(sizable: number | (new () => NumericDataType)): PayloadSpec {
-    const skipBytes: number = (typeof sizable === 'number') ? sizable : Math.floor(new sizable().bitSize() / 8);
+  public skip(sizable: number | (new (name: string | null) => NumericDataType)): PayloadSpec {
+    const skipBytes: number = (typeof sizable === 'number') ? sizable : Math.floor(new sizable(null).bitSize() / 8);
     this.instructions.push(new SkipInstruction(skipBytes))
     return this;
   }
@@ -34,7 +34,7 @@ export class PayloadSpec {
   }
 }
 
-export type ReaderState = { result: any, offset: number, mode: Mode};
+export type ReaderState = { result: any, storedVars: any, offset: number, mode: Mode};
 
 export interface Instruction {
   execute(buffer: Buffer, readerState: ReaderState): any;
@@ -46,7 +46,14 @@ class Ignorable implements Instruction {
   constructor(private inst: Instruction) {}
 
   execute(buffer: Buffer, readerState: ReaderState) {
-    return this.inst.execute(buffer, readerState);
+    this.inst.execute(buffer, readerState);
+    const name = this.inst.name;
+    if (name) {
+      const value = readerState.result[name];
+      delete readerState.result[name];
+      readerState.storedVars[name] = value;
+    }
+    return 
   }
 
   get size(): number {
@@ -101,6 +108,7 @@ class BufferReader {
   
   public read(buffer: Buffer): any {
     const result: any = {};
+    const storedVars: any = {};
 
     for(const instruction of this.instructions) {
       if (instruction instanceof EndiannessInstruction) {
@@ -108,7 +116,7 @@ class BufferReader {
         continue;
       }
 
-      const readerState = { result, mode: this._mode, offset: this.byteOffset }
+      const readerState = { result, storedVars, mode: this._mode, offset: this.byteOffset }
       instruction.execute(buffer, readerState);
       this.byteOffset += instruction.size;
     }

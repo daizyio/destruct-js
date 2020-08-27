@@ -7,7 +7,7 @@ abstract class ThenableInstruction implements Instruction {
     this._then = options?.then;
   }
 
-  abstract get(buffer: Buffer, readerState: ReaderState): number | string;
+  abstract execute(buffer: Buffer, readerState: ReaderState): number | string;
   abstract size: number;
   
   get name() {
@@ -28,7 +28,7 @@ export abstract class NumericDataType extends ThenableInstruction {
   abstract le: (offset: number) => any;
   abstract bitSize: () => number;
 
-  public get(buffer: Buffer, readerState: ReaderState): number {
+  public execute(buffer: Buffer, readerState: ReaderState): number {
     const valueFunction = (readerState.mode === Mode.BE) ? this.be : this.le;
     const boundFunction = valueFunction.bind(buffer);
     const value = boundFunction(readerState.offset);
@@ -50,7 +50,7 @@ export class UInt8 extends NumericDataType {
   public bitSize = () => 8;
 }
 
-export class Int8 extends NumericDataType {
+export class Int8 extends NumericDataType {  
   public be = Buffer.prototype.readInt8;
   public le = Buffer.prototype.readInt8;
   public bitSize = () => 8;
@@ -118,7 +118,7 @@ export class Text extends ThenableInstruction {
     this.terminator = options?.terminator;
   }
 
-  public get(buffer: Buffer, readerState: ReaderState) {
+  public execute(buffer: Buffer, readerState: ReaderState) {
     const startingBuffer = buffer.slice(readerState.offset);
     let workingBuffer: Buffer = startingBuffer;
     if (this._size) {

@@ -75,19 +75,19 @@ describe('fetching a field', () => {
         .exec(Buffer.from([0xFF, 0x01]));
 
     expect(result.firstByte).toBe(255);
-    // expect(result.ignoreMe).toBeUndefined();
+    expect(result.ignoreMe).toBeUndefined();
   });
 
   it('skips the required number of bytes', () => {
     const result =
       new PayloadSpec()
-        .field('ignoreMe', UInt8)
-        .field('andMe', UInt32)
-        .fetch('lastByte', UInt8)
+        .fetch('ignoreMe', UInt8)
+        .fetch('andMe', UInt32)
+        .field('lastByte', UInt8)
         .exec(Buffer.from([0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x01]));
 
-    // expect(result.ignoreMe).toBeUndefined();
-    // expect(result.andMe).toBeUndefined();
+    expect(result.ignoreMe).toBeUndefined();
+    expect(result.andMe).toBeUndefined();
     expect(result.lastByte).toBe(1);
   })
 })
