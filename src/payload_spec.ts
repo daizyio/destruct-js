@@ -34,8 +34,10 @@ export class PayloadSpec {
   }
 }
 
+export type ReaderState = { result: any, offset: number, mode: Mode};
+
 export interface Instruction {
-  get(buffer: Buffer, offset: number, result: any, mode?: Mode): any;
+  get(buffer: Buffer, readerState: ReaderState): any;
   readonly size: number;
   readonly name: string | null;
 }
@@ -43,8 +45,8 @@ export interface Instruction {
 class Ignorable implements Instruction {
   constructor(private inst: Instruction) {}
 
-  get(buffer: Buffer, offset: number, result: any, mode?: Mode) {
-    return this.inst.get(buffer, offset, mode);
+  get(buffer: Buffer, readerState: ReaderState) {
+    return this.inst.get(buffer, readerState);
   }
 
   get size(): number {
@@ -57,7 +59,7 @@ class Ignorable implements Instruction {
 }
 
 class NullInstruction implements Instruction {
-  public get(buffer: Buffer, offset: number, result: any, mode?: Mode): any {
+  public get(buffer: Buffer, readerState: ReaderState): any {
     return null;
   }
 
@@ -102,11 +104,12 @@ class BufferReader {
 
     for(const instruction of this.instructions) {
       if (instruction instanceof EndiannessInstruction) {
-        this.mode = instruction.mode;
+        this._mode = instruction.mode;
         continue;
       }
 
-      const value = instruction.get(buffer, this.byteOffset, result, this.mode);
+      const readerState = { result, mode: this._mode, offset: this.byteOffset }
+      const value = instruction.get(buffer, readerState);
       if (instruction.name) {
         result[instruction.name] = value;
       }
@@ -114,21 +117,5 @@ class BufferReader {
     }
 
     return result;
-  }
-
-  get offset() {
-    return this.byteOffset;
-  }
-
-  set offset(offset: number) {
-    this.byteOffset = offset;
-  }
-
-  get mode() {
-    return this._mode;
-  }
-
-  set mode(mode: Mode) {
-    this._mode = mode;
   }
 }

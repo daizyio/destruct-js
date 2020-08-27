@@ -1,4 +1,4 @@
-import { Mode, Instruction } from './payload_spec';
+import { Mode, Instruction, ReaderState } from './payload_spec';
 
 abstract class ThenableInstruction implements Instruction {
   private _then: (value: any) => any;
@@ -7,7 +7,7 @@ abstract class ThenableInstruction implements Instruction {
     this._then = options?.then;
   }
 
-  abstract get(buffer: Buffer, offset: number, result: any, mode?: Mode | undefined): number | string;
+  abstract get(buffer: Buffer, readerState: ReaderState): number | string;
   abstract size: number;
   
   get name() {
@@ -28,10 +28,10 @@ export abstract class NumericDataType extends ThenableInstruction {
   abstract le: (offset: number) => any;
   abstract bitSize: () => number;
 
-  public get(buffer: Buffer, offset: number, result: any, mode: Mode): number {
-    const valueFunction = (mode === Mode.BE) ? this.be : this.le;
+  public get(buffer: Buffer, readerState: ReaderState): number {
+    const valueFunction = (readerState.mode === Mode.BE) ? this.be : this.le;
     const boundFunction = valueFunction.bind(buffer);
-    const value = boundFunction(offset);
+    const value = boundFunction(readerState.offset);
     return this.then(value);
   }
 
@@ -114,8 +114,8 @@ export class Text extends ThenableInstruction {
     this.terminator = options?.terminator;
   }
 
-  public get(buffer: Buffer, offset: number, result: any, mode: Mode) {
-    const startingBuffer = buffer.slice(offset);
+  public get(buffer: Buffer, readerState: ReaderState) {
+    const startingBuffer = buffer.slice(readerState.offset);
     let workingBuffer: Buffer = startingBuffer;
     if (this._size) {
       workingBuffer = startingBuffer.slice(0, this._size);
