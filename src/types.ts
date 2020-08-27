@@ -32,7 +32,11 @@ export abstract class NumericDataType extends ThenableInstruction {
     const valueFunction = (readerState.mode === Mode.BE) ? this.be : this.le;
     const boundFunction = valueFunction.bind(buffer);
     const value = boundFunction(readerState.offset);
-    return this.then(value);
+    const thennedValue = this.then(value);
+    if (this.name) {
+      readerState.result[this.name] = thennedValue;
+    }
+    return thennedValue;
   }
 
   get size() {
@@ -126,7 +130,12 @@ export class Text extends ThenableInstruction {
         workingBuffer = startingBuffer.slice(0, index);
       }
     }
-    return this.then(workingBuffer.toString(this.encoding));
+    const value = this.then(workingBuffer.toString(this.encoding));
+    if (this.name) {
+      readerState.result[this.name] = value;
+    }
+
+    return value;
   }
 
   get size() {
