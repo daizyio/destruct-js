@@ -2,12 +2,17 @@ import { NumericDataType } from './types';
 
 export class PayloadSpec {
 
-  private instructions: [string | null, Instruction][] = [];
+  private instructions: InstructionList = [];
 
   constructor(private mode: Mode = Mode.BE) {}
 
   public field(name: string, Type: new (options?: any) => Instruction, options?: any): PayloadSpec {
     this.instructions.push([name, new Type(options)]);
+    return this;
+  }
+
+  public fetch(name: string, Type: new (options?: any) => Instruction, options?: any): PayloadSpec {
+    this.instructions.push([name, new Ignorable(new Type(options))]);
     return this;
   }
 
@@ -23,34 +28,28 @@ export class PayloadSpec {
   }
 
   public exec(data: Buffer): any {
-    const reader = new BufferReader(data, this.mode);
-    const result: any = {};
-    for(const instruction of this.instructions) {
-      const value = reader.read(instruction[1]);
-      if (instruction[0]) {
-        const fieldName = instruction[0] as string;
-        result[fieldName] = value;
-      }
-    }
-
-    return result;
+    const reader = new BufferReader(this.mode, this.instructions);
+  
+    return reader.read(data);
   }
 }
+
+type InstructionList = [string | null, Instruction][];
 
 export interface Instruction {
   get(buffer: Buffer, offset: number, mode?: Mode): any;
   readonly size: number;
 }
 
-class NumberField implements Instruction {
-  constructor(private type: NumericDataType) {}
+class Ignorable implements Instruction {
+  constructor(private inst: Instruction) {}
 
-  public get(buffer: Buffer, offset: number, mode: Mode = Mode.BE): number {
-    return this.type.get(buffer, offset, mode);
+  get(buffer: Buffer, offset: number, mode?: Mode | undefined) {
+    return this.inst.get(buffer, offset, mode);
   }
 
-  get size() {
-    return Math.floor(this.type.bitSize() / 8);
+  get size(): number {
+    return this.inst.size;
   }
 }
 
@@ -88,18 +87,25 @@ export enum Mode {
 
 class BufferReader {
   private byteOffset: number = 0;
+  
+  constructor(private mode: Mode = Mode.BE, private instructions: InstructionList) {}
+  
+  public read(buffer: Buffer): any {
+    const result: any = {};
 
-  constructor(private buffer: Buffer, private mode: Mode = Mode.BE) {}
+    for(const [name, instruction] of this.instructions) {
+      if (instruction instanceof EndiannessInstruction) {
+        this.mode = instruction.mode;
+        continue;
+      }
 
-  public read(instruction: Instruction): number | string | null {
-    if (instruction instanceof EndiannessInstruction) {
-      this.mode = instruction.mode;
-      return null;
+      const value = instruction.get(buffer, this.byteOffset, this.mode);
+      if (name) {
+        result[name] = value;
+      }
+      this.byteOffset += instruction.size;
     }
 
-    const value = instruction.get(this.buffer, this.byteOffset, this.mode);
-
-    this.byteOffset += instruction.size;
-    return value;
+    return result;
   }
 }
