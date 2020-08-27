@@ -39,7 +39,7 @@ export class PayloadSpec {
   }
 }
 
-export type ReaderState = { result: any, storedVars: any, offset: number, mode: Mode};
+export type ReaderState = { result: any, storedVars: any, offset: { bytes: number, bits: number }, mode: Mode};
 
 export interface Instruction {
   execute(buffer: Buffer, readerState: ReaderState): any;
@@ -91,7 +91,7 @@ class SkipInstruction extends NullInstruction {
   }
 
   get size() {
-    return this.bytes;
+    return this.bytes * 8;
   }
 }
 
@@ -127,7 +127,8 @@ export enum Mode {
 
 class BufferReader {
   private byteOffset: number = 0;
-  
+  private bitOffset: number = 0;
+
   constructor(private _mode: Mode = Mode.BE, private instructions: Instruction[]) {}
   
   public read(buffer: Buffer): any {
@@ -140,11 +141,18 @@ class BufferReader {
         continue;
       }
 
-      const readerState = { result, storedVars, mode: this._mode, offset: this.byteOffset }
+      const readerState = { result, storedVars, mode: this._mode, offset: { bytes: this.byteOffset, bits: this.bitOffset } }
       instruction.execute(buffer, readerState);
-      this.byteOffset += instruction.size;
+      this.addOffset(instruction.size);
     }
 
     return result;
+  }
+
+  private addOffset(bitSize: number) {
+    const currentOffsetInBits = (this.byteOffset * 8) + this.bitOffset;
+    const updatedOffsetInBits = currentOffsetInBits + bitSize;
+    this.byteOffset = Math.floor(updatedOffsetInBits / 8);
+    this.bitOffset = updatedOffsetInBits % 8;
   }
 }

@@ -1,5 +1,5 @@
 import { PayloadSpec } from '../payload_spec'
-import { Text, Int8, Int16, UInt8 } from '../types';
+import { Text, Int8, Int16, UInt8, Bit } from '../types';
 
 describe('Text', () => {
   it('reads text as ascii', () => {
@@ -90,3 +90,46 @@ describe('Text', () => {
     expect(result.number).toBe(123);
   })
 })
+
+describe('Bit', () => {
+  it('retrieves a single bit from the field', () => {
+    const spec = new PayloadSpec();
+
+    spec.field('enabled', Bit);
+
+    const result = spec.exec(Buffer.from([0x80]));
+
+    expect(result.enabled).toBe(true);
+  })
+
+  it('can read multiple bits in a row', () => {
+    const spec = new PayloadSpec();
+
+    spec.field('enabled', Bit)
+        .field('ledOff', Bit)
+        .field('releaseTheHounds', Bit);
+
+    const result = spec.exec(Buffer.from([0xA0]));
+
+    expect(result.enabled).toBe(true);
+    expect(result.ledOff).toBe(false);
+    expect(result.releaseTheHounds).toBe(true);
+
+  });
+
+  it('can read bits after reading bytes', () => {
+    const spec = new PayloadSpec();
+
+    spec.field('firstByte', UInt8)
+        .field('secondByte', UInt8)
+        .field('enabled', Bit)
+        .field('ledOff', Bit)
+        .field('releaseTheHounds', Bit)
+
+    const result = spec.exec(Buffer.from([0x01, 0x02, 0xA0]))
+
+    expect(result.enabled).toBe(true);
+    expect(result.ledOff).toBe(false);
+    expect(result.releaseTheHounds).toBe(true);
+  })
+});

@@ -7,7 +7,7 @@ abstract class ThenableInstruction implements Instruction {
     this._then = options?.then;
   }
 
-  abstract execute(buffer: Buffer, readerState: ReaderState): number | string;
+  abstract execute(buffer: Buffer, readerState: ReaderState): number | string | boolean;
   abstract size: number;
   
   get name() {
@@ -31,7 +31,7 @@ export abstract class NumericDataType extends ThenableInstruction {
   public execute(buffer: Buffer, readerState: ReaderState): number {
     const valueFunction = (readerState.mode === Mode.BE) ? this.be : this.le;
     const boundFunction = valueFunction.bind(buffer);
-    const value = boundFunction(readerState.offset);
+    const value = boundFunction(readerState.offset.bytes);
     const thennedValue = this.then(value);
     if (this.name) {
       readerState.result[this.name] = thennedValue;
@@ -40,7 +40,7 @@ export abstract class NumericDataType extends ThenableInstruction {
   }
 
   get size() {
-    return Math.floor(this.bitSize() / 8);
+    return this.bitSize();
   }
 }
 
@@ -119,7 +119,7 @@ export class Text extends ThenableInstruction {
   }
 
   public execute(buffer: Buffer, readerState: ReaderState) {
-    const startingBuffer = buffer.slice(readerState.offset);
+    const startingBuffer = buffer.slice(readerState.offset.bytes);
     let workingBuffer: Buffer = startingBuffer;
     if (this._size) {
       workingBuffer = startingBuffer.slice(0, this._size);
@@ -139,6 +139,21 @@ export class Text extends ThenableInstruction {
   }
 
   get size() {
-    return this._size;
+    return this._size * 8;
+  }
+}
+
+export class Bit extends ThenableInstruction {
+  execute(buffer: Buffer, readerState: ReaderState): string | number | boolean {
+    const value = buffer.readUInt8(readerState.offset.bytes);
+    const result = ((value >> (7 - readerState.offset.bits)) & 0x01) === 1;
+    if (this.name) {
+      readerState.result[this.name] = result;
+    }
+    return result;
+  }
+
+  get size() {
+    return 1;
   }
 }
