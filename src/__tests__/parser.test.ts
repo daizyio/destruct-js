@@ -91,3 +91,47 @@ describe('storing a field', () => {
     expect(result.lastByte).toBe(1);
   })
 })
+
+describe('deriving a field', () => {
+  it('creates a new field in the result', () => {
+    const result = 
+      new PayloadSpec()
+        .derive('derivedField', () => 5)
+        .exec(Buffer.from([]));
+
+    expect(result.derivedField).toBe(5);
+  })
+
+  it('does not skip any bytes in the buffer', () => {
+    const result =
+      new PayloadSpec()
+        .derive('derivedField', () => 5)
+        .field('firstByte', Int8)
+        .exec(Buffer.from([0x02]))
+
+    expect(result.derivedField).toBe(5);
+    expect(result.firstByte).toBe(2);
+  })
+
+  it('can reference other variables', () => {
+    const result =
+      new PayloadSpec()
+        .field('count', Int8)
+        .derive('doubleCount', (r) => r.count * 2)
+        .exec(Buffer.from([0x02]))
+
+      expect(result.count).toBe(2);
+      expect(result.doubleCount).toBe(4);
+  })
+
+  it('can used stored vars as well as fields', () => {
+    const result =
+      new PayloadSpec()
+        .field('count', UInt8)
+        .store('factor', UInt8)
+        .derive('total', (r) => r.count * r.factor)
+        .exec(Buffer.from([0x02, 0x04]))
+
+    expect(result.total).toBe(8);
+  })
+})

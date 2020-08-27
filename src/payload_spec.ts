@@ -16,6 +16,11 @@ export class PayloadSpec {
     return this;
   }
 
+  public derive(name: string, callback: (r: any) => number | string | null): PayloadSpec {
+    this.instructions.push(new DeriveInstruction(name, callback));
+    return this;
+  }
+
   public skip(sizable: number | (new (name: string | null) => NumericDataType)): PayloadSpec {
     const skipBytes: number = (typeof sizable === 'number') ? sizable : Math.floor(new sizable(null).bitSize() / 8);
     this.instructions.push(new SkipInstruction(skipBytes))
@@ -93,6 +98,25 @@ class SkipInstruction extends NullInstruction {
 class EndiannessInstruction extends NullInstruction {
   constructor(public mode: Mode) {
     super();
+  }
+}
+
+class DeriveInstruction implements Instruction {
+  constructor(private _name: string, private callback: (r: any) => number | string | null) {}
+
+  public execute(buffer: Buffer, readerState: ReaderState) {
+    const combinedVars = { ...readerState.result, ...readerState.storedVars }
+    const value = this.callback(combinedVars);
+    readerState.result[this._name] = value;
+    return value;
+  }
+
+  get name() {
+    return this._name;
+  }
+
+  get size() {
+    return 0;
   }
 }
 
