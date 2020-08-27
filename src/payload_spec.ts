@@ -6,13 +6,13 @@ export class PayloadSpec {
 
   constructor(private mode: Mode = Mode.BE) {}
 
-  public field(name: string, Type: new (options?: any) => Instruction, options?: any): PayloadSpec {
-    this.instructions.push([name, new Type(options)]);
+  public field(name: string, Type: new (name: string | null, options?: any) => Instruction, options?: any): PayloadSpec {
+    this.instructions.push([name, new Type(name, options)]);
     return this;
   }
 
-  public fetch(name: string, Type: new (options?: any) => Instruction, options?: any): PayloadSpec {
-    this.instructions.push([name, new Ignorable(new Type(options))]);
+  public fetch(name: string, Type: new (name: string | null, options?: any) => Instruction, options?: any): PayloadSpec {
+    this.instructions.push([name, new Ignorable(new Type(name, options))]);
     return this;
   }
 

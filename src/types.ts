@@ -3,9 +3,10 @@ import { Mode, Instruction } from './payload_spec';
 abstract class ThenableInstruction implements Instruction {
   private _then: (value: any) => any;
 
-  constructor(options?: any) {
+  constructor(private name: string | null, options?: any) {
     this._then = options?.then;
   }
+
   abstract get(buffer: Buffer, offset: number, result: any, mode?: Mode | undefined): number | string;
   abstract size: number;
 
@@ -73,8 +74,8 @@ export class Int32 extends NumericDataType {
 
 abstract class FloatingPointDataType extends NumericDataType {
   private dp: number | null;
-  constructor(options?: any) {
-    super();
+  constructor(name: string | null, options?: any) {
+    super(name, options);
     this.dp = options?.dp;
   }
 
@@ -102,8 +103,8 @@ export class Text extends ThenableInstruction {
   private terminator: number;
   private encoding: Encoding;
 
-  constructor(options?: any) {
-    super(options);
+  constructor(name: string | null, options?: any) {
+    super(name, options);
     this._size = options?.size;
     this.encoding = options?.encoding || 'utf8';
     this.terminator = options?.terminator;
