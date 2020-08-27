@@ -37,14 +37,14 @@ export class PayloadSpec {
 type InstructionList = [string | null, Instruction][];
 
 export interface Instruction {
-  get(buffer: Buffer, offset: number, mode?: Mode): any;
+  get(buffer: Buffer, offset: number, result: any, mode?: Mode): any;
   readonly size: number;
 }
 
 class Ignorable implements Instruction {
   constructor(private inst: Instruction) {}
 
-  get(buffer: Buffer, offset: number, mode?: Mode | undefined) {
+  get(buffer: Buffer, offset: number, result: any, mode?: Mode) {
     return this.inst.get(buffer, offset, mode);
   }
 
@@ -54,7 +54,7 @@ class Ignorable implements Instruction {
 }
 
 class NullInstruction implements Instruction {
-  public get(buffer: Buffer, offset: number, mode?: Mode): any {
+  public get(buffer: Buffer, offset: number, result: any, mode?: Mode): any {
     return null;
   }
 
@@ -88,7 +88,7 @@ export enum Mode {
 class BufferReader {
   private byteOffset: number = 0;
   
-  constructor(private mode: Mode = Mode.BE, private instructions: InstructionList) {}
+  constructor(private _mode: Mode = Mode.BE, private instructions: InstructionList) {}
   
   public read(buffer: Buffer): any {
     const result: any = {};
@@ -99,7 +99,7 @@ class BufferReader {
         continue;
       }
 
-      const value = instruction.get(buffer, this.byteOffset, this.mode);
+      const value = instruction.get(buffer, this.byteOffset, result, this.mode);
       if (name) {
         result[name] = value;
       }
@@ -107,5 +107,21 @@ class BufferReader {
     }
 
     return result;
+  }
+
+  get offset() {
+    return this.byteOffset;
+  }
+
+  set offset(offset: number) {
+    this.byteOffset = offset;
+  }
+
+  get mode() {
+    return this._mode;
+  }
+
+  set mode(mode: Mode) {
+    this._mode = mode;
   }
 }
