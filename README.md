@@ -14,9 +14,10 @@ const spec = new PayloadSpec();        // big endian by default
 spec.field('count', UInt32)            // 4 byte unsigned integer
     .field('temperature', UInt8,       // 1 byte unsigned...
           { then: (f) => (f - 32) * (5/9)}) // ...which we convert from Farenheit to Celsius
+    .skip(1)                                //skip a byte
     .field('stationId', Text, { size: 3 })  // 4 bytes of text, utf8 by default
 
-const result = spec.exec(Buffer.from([0xFF, 0x30, 0x19, 0xA0, 0xD4, 0x42, 0x48, 0x36]));
+const result = spec.exec(Buffer.from([0xFF, 0x30, 0x19, 0xA0, 0xD4, 0xFF, 0x42, 0x48, 0x36]));
 
 expect(result.count).toBe(4281342368);
 expect(result.temperature).toBe(100);
@@ -94,10 +95,43 @@ All data types support a `then` option to do some post processing on the value. 
 ```
 const result = 
   new PayloadSpec()
-    .field('numericText', Text, { then: parseInt })
+    .field('numericText', Text, { size: 3, then: parseInt })
     .field('temperature', UInt8, { then: (f) => (f - 32) * (5/9)})
     .exec(Buffer.from([0x31, 0x32, 0x33, 0xD4]))
 
 expect(result.numericText).toBe(123);
 expect(result.temperature).toBe(100);
+```
+
+Other instructions
+---
+
+As well as specifying fields using `.field()`, you can use other instructions to modify behaviour of the parser.
+
+`skip(number | NumericDataType)` - skips the specified number of bytes, or the size of the specified numeric data type.
+
+```
+const result = 
+  new PayloadSpec()
+    .field('firstByte', UInt8)
+    .skip(UInt16)               // same as .skip(2)
+    .field('lastByte', UInt8)
+    .exec(Buffer.from([0xFF, 0x00, 0x00, 0x01]));
+
+expect(result.firstByte).toBe(255);
+expect(result.lastByte).toBe(1);
+```
+
+`endianness(Mode)` - switches the buffer to reading the specified endianness *from this point* i.e. it does not apply to previously read values.
+
+```
+const result = 
+  new PayloadSpec(Mode.BE)
+    .field('countBE', UInt16)
+    .endianness(Mode.LE)
+    .field('countLE', UInt16)
+    .exec(Buffer.from([0xFF, 0x30, 0x30, 0xFF, 0xFF, 0x30]))
+  
+expect(result.countBE).toBe(65328);
+expect(result.countLE).toBe(65328);
 ```
