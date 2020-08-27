@@ -1,3 +1,5 @@
+![build](https://github.com/daizyio/destruct-js/workflows/CI/badge.svg)
+
 destruct-js
 ===========
 
