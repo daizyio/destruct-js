@@ -12,8 +12,8 @@ A quick example:
 const spec = new PayloadSpec();        // big endian by default
 
 spec.field('count', UInt32)            // 4 byte unsigned integer
-    .field('temperature', UInt8, 
-          { then: (f) => (f - 32) * (5/9)})        // 1 byte unsigned, which we convert from Farenheit to Celsius
+    .field('temperature', UInt8,       // 1 byte unsigned...
+          { then: (f) => (f - 32) * (5/9)}) // ...which we convert from Farenheit to Celsius
     .field('stationId', Text, { size: 3 })  // 4 bytes of text, utf8 by default
 
 const result = spec.exec(Buffer.from([0xFF, 0x30, 0x19, 0xA0, 0xD4, 0x42, 0x48, 0x36]));
