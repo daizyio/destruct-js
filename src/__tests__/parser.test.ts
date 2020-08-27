@@ -66,12 +66,12 @@ describe('endianness', () => {
   });
 });
 
-describe('fetching a field', () => {
+describe('storing a field', () => {
   it('does not add to the result', () => {
     const result = 
       new PayloadSpec()
         .field('firstByte', UInt8)
-        .fetch('ignoreMe', UInt8)
+        .store('ignoreMe', UInt8)
         .exec(Buffer.from([0xFF, 0x01]));
 
     expect(result.firstByte).toBe(255);
@@ -81,8 +81,8 @@ describe('fetching a field', () => {
   it('skips the required number of bytes', () => {
     const result =
       new PayloadSpec()
-        .fetch('ignoreMe', UInt8)
-        .fetch('andMe', UInt32)
+        .store('ignoreMe', UInt8)
+        .store('andMe', UInt32)
         .field('lastByte', UInt8)
         .exec(Buffer.from([0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x01]));
 
