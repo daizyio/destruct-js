@@ -11,7 +11,7 @@ export class PayloadSpec {
     return this;
   }
 
-  public fetch(name: string, Type: new (name: string | null, options?: any) => Instruction, options?: any): PayloadSpec {
+  public store(name: string, Type: new (name: string | null, options?: any) => Instruction, options?: any): PayloadSpec {
     this.instructions.push(new Ignorable(new Type(name, options)));
     return this;
   }

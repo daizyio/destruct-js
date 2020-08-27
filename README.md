@@ -137,3 +137,16 @@ const result =
 expect(result.countBE).toBe(65328);
 expect(result.countLE).toBe(65328);
 ```
+
+`store(string, DataType)` - fetches a value from the buffer in the same way as `.field()`, but stores the value internally instead of adding to the final output. `.fetch()` can be used in combination with `.store()` to use values in later calculations.
+
+```
+const result = 
+  new PayloadSpec()
+    .field('firstByte', UInt8)
+    .store('ignoreMe', UInt8)
+    .exec(Buffer.from([0xFF, 0x01]));
+
+expect(result.firstByte).toBe(255);
+expect(result.ignoreMe).toBeUndefined();
+```

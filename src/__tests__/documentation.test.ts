@@ -90,4 +90,15 @@ describe('Documentation examples', () => {
       expect(result.countBE).toBe(65328);
       expect(result.countLE).toBe(65328);
   })
+
+  test('store example', () => {
+    const result = 
+    new PayloadSpec()
+      .field('firstByte', UInt8)
+      .store('ignoreMe', UInt8)
+      .exec(Buffer.from([0xFF, 0x01]));
+
+    expect(result.firstByte).toBe(255);
+    expect(result.ignoreMe).toBeUndefined();
+  })
 })
