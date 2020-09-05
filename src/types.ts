@@ -176,11 +176,12 @@ export abstract class Bits extends ThenableInstruction {
     const bitsRead = bytesToRead * 8;
     const bitMask = ((2 ** this.size) - 1);
     const result = ((value >> (bitsRead - this.size - readerState.offset.bits)) & bitMask);
-    this.check(result);
+    const thennedValue = this.then(result);
+    this.check(thennedValue);
     if (this.name) {
-      readerState.result[this.name] = result;
+      readerState.result[this.name] = thennedValue;
     }
-    return result;
+    return thennedValue;
   }
 
   get size() {

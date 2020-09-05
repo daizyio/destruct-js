@@ -219,4 +219,13 @@ describe('Bits', () => {
 
     expect(result.check).toBe(255);
   });
+
+  it('supports then', () => {
+    const result = new PayloadSpec()
+      .field('bits2', Bits2, { then: (v:number) => v * 4 })
+      .exec(Buffer.from([0xC2]))
+
+    expect(result.bits2).toBe(12);
+
+  })
 })
