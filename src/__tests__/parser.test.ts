@@ -1,5 +1,5 @@
-import { PayloadSpec, Mode } from '../payload_spec';
-import { UInt8, Int8, UInt16, Float, UInt32, Text, Bit, Bool } from '../types';
+import { PayloadSpec, Mode, ParsingError } from '../payload_spec';
+import { UInt8, Int8, UInt16, Float, UInt32, Text, Bit, Bool, Bits3, Bits5, Bits2 } from '../types';
 
 describe('Simple fields', () => {
   it('reads fields in order from the buffer', () => {
@@ -146,6 +146,26 @@ describe('padding', () => {
     
     expect(result.enabled).toBe(true);
     expect(result.count).toBe(2);
+  });
+
+  it('throws an error if trying to read Int from a non-padded position', () => {
+    const spec = 
+      new PayloadSpec()
+        .field('enabled', Bool)
+        .field('count', Int8)
+      
+    expect(() => spec.exec(Buffer.from([0x80, 0x02]))).toThrowError(new ParsingError('Buffer position is not at a byte boundary (bit offset 1). Do you need to use pad()?'))
+  })
+
+  it('does not error if previous bits add up to byte boundary', () => {
+    const spec = 
+      new PayloadSpec()
+        .field('enabled', Bool)
+        .field('days', Bits5)
+        .field('frequency', Bits2)
+        .field('count', Int8)
+      
+    expect(() => spec.exec(Buffer.from([0x80, 0x02]))).not.toThrowError(new ParsingError('Buffer position is not at a byte boundary (bit offset 0). Do you need to use pad()?'))
   })
 })
 
@@ -238,4 +258,53 @@ describe('literal value', () => {
 
     expect(data.res).toBe(2.14);
   });
+});
+describe('should be', () => {
+  
+  it('continues if the values match the expected', () => {
+    const spec =
+      new PayloadSpec()
+        .field('enabled', Bool, { shouldBe: true })
+        .field('days', Bits3, { shouldBe: 5 })
+        .pad()
+        .field('frequency', UInt8, { shouldBe: 3 })
+
+    const data = spec.exec(Buffer.from([0xD0, 0x03]))
+
+    expect(data.enabled).toBe(true);
+    expect(data.days).toBe(5);
+    expect(data.frequency).toBe(3);
+  });
+
+  it('throws an error if the output doesnt match the expected', () => {
+    const spec =
+      new PayloadSpec()
+        .field('frequency', UInt8, { shouldBe: 3 })
+
+    expect(() => spec.exec(Buffer.from([0x04]))).toThrowError(new ParsingError('Expected frequency to be 3 but was 4'));
+  });
+
+  it('still works if the expected value is falsy', () => {
+    const spec =
+      new PayloadSpec()
+        .field('frequency', UInt8, { shouldBe: 0 })
+
+    expect(() => spec.exec(Buffer.from([0x01]))).toThrowError(new ParsingError('Expected frequency to be 0 but was 1'));
+  });
+
+  it('works for text', () => {
+    const spec =
+      new PayloadSpec()
+        .field('name', Text, { size: 3, shouldBe: 'bob' })
+
+    expect(() => spec.exec(Buffer.from([0x6e, 0x65, 0x64]))).toThrowError(new ParsingError('Expected name to be bob but was ned'));
+  })
+
+  it('works for bits', () => {
+    const spec =
+      new PayloadSpec()
+        .field('bits', Bits3, { shouldBe: 4 })
+      
+    expect(() => spec.exec(Buffer.from([0x00]))).toThrowError(new ParsingError('Expected bits to be 4 but was 0'));
+  })
 });

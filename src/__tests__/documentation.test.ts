@@ -163,4 +163,13 @@ describe('Documentation examples', () => {
 
     expect(result.type).toBe('install')
   })
+
+  test('shouldBe example', () => {
+    const result = 
+      new PayloadSpec()
+        .field('javaClassIdentifier', UInt32, { shouldBe: 0xCAFEBABE })
+        .exec(Buffer.from([0xCA, 0xFE, 0xBA, 0xBE]))
+
+    expect(result.javaClassIdentifier).toBe(0xCAFEBABE);
+  })
 })

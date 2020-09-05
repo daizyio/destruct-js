@@ -208,3 +208,7 @@ class BufferReader {
     this.bitOffset = updatedOffsetInBits % 8;
   }
 }
+
+export class ParsingError extends Error {
+
+}

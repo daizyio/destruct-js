@@ -71,10 +71,10 @@ expect(result.ledOff).toBe(false);
 expect(result.releaseTheHounds).toBe(true);
 ```
 
-Bit, Bits[2-7]
+Bit, Bits[2-16]
 ---
 
-The `Bit` type reads a single bit from the buffer, as a 0 or 1.  The types `Bits2`, `Bits3`, `Bits4`, `Bits5`, `Bits6`, and `Bits7` read the corresponding number of bits and returns them as unsigned integers. Note that this reads across byte boundaries where necessary
+The `Bit` type reads a single bit from the buffer, as a 0 or 1.  The types `Bits2` through to `Bits16` read the corresponding number of bits and returns them as unsigned integers. Note that this reads across byte boundaries where necessary.  This means that, for example, `Bits8` is *not* the same as `UInt8`, which will throw an error if trying to read when not aligned to a byte boundary.
 
 ```
 const result = 
@@ -156,6 +156,15 @@ const result =
 
 expect(result.numericText).toBe(123);
 expect(result.temperature).toBe(100);
+```
+
+`shouldBe: (string | number | boolean)` - All data types support a `shouldBe` option, that can be used to assert that a particular value should be fixed.  For example, you might use this to check that a particular delimiter is present.  If the value read from the buffer does not match the expected value, a `ParsingError` will be thrown.
+
+```
+const result = 
+  new PayloadSpec()
+    .field('javaClassIdentifier', UInt32, { shouldBe: 0xCAFEBABE })
+    .exec(Buffer.from([0xCA, 0xFE, 0xBA, 0xBE]))
 ```
 
 Other instructions

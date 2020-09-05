@@ -1,5 +1,5 @@
 import { PayloadSpec } from '../payload_spec'
-import { Text, Int8, Int16, UInt8, Bit, Bits2, Bits3, Bits4, Bits5, Bits6, Bits7, Bool } from '../types';
+import { Text, Int8, Int16, UInt8, Bit, Bits2, Bits3, Bits4, Bits5, Bits6, Bits7, Bool, Bits8, Bits9, Bits10, Bits11, Bits12, Bits13, Bits14, Bits15, Bits16 } from '../types';
 
 describe('Text', () => {
   it('reads text as ascii', () => {
@@ -179,7 +179,7 @@ describe('Bit', () => {
 });
 
 describe('Bits', () => {
-  it('has aliases for taking 2-7 bits', async () => {
+  it('has aliases for taking 2-16 bits', async () => {
     const spec = new PayloadSpec()
       .field('bits2', Bits2)
       .field('bits3', Bits3)
@@ -187,10 +187,19 @@ describe('Bits', () => {
       .field('bits5', Bits5)
       .field('bits6', Bits6)
       .field('bits7', Bits7)
+      .field('bits8', Bits8)
+      .field('bits9', Bits9)
+      .field('bits10', Bits10)
+      .field('bits11', Bits11)
+      .field('bits12', Bits12)
+      .field('bits13', Bits13)
+      .field('bits14', Bits14)
+      .field('bits15', Bits15)
+      .field('bits16', Bits16)
       .pad()
       .field('check', UInt8);
 
-    const result = spec.exec(Buffer.from([0xA5, 0x32, 0x7F, 0xC3, 0x77]))
+    const result = spec.exec(Buffer.from([0xA5, 0x32, 0x7F, 0xC3, 0x77, 0xA1, 0x3B, 0x55, 0xFF, 0xCA, 0xD1, 0x2F, 0x40, 0xEE, 0xBF, 0x4D, 0x04, 0xFF]))
 
     expect(result.bits2).toBe(2);
     expect(result.bits3).toBe(4);
@@ -198,7 +207,16 @@ describe('Bits', () => {
     expect(result.bits5).toBe(12);
     expect(result.bits6).toBe(39);
     expect(result.bits7).toBe(126);
+    expect(result.bits8).toBe(27);
+    expect(result.bits9).toBe(378);
+    expect(result.bits10).toBe(78);
+    expect(result.bits11).toBe(1707);
+    expect(result.bits12).toBe(4089);
+    expect(result.bits13).toBe(2884);
+    expect(result.bits14).toBe(12096);
+    expect(result.bits15).toBe(30559);
+    expect(result.bits16).toBe(42626);
 
-    expect(result.check).toBe(119);
+    expect(result.check).toBe(255);
   });
 })

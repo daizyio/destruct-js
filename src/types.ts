@@ -1,10 +1,12 @@
-import { Mode, Instruction, ReaderState } from './payload_spec';
+import { Mode, Instruction, ReaderState, ParsingError } from './payload_spec';
 
 abstract class ThenableInstruction implements Instruction {
   private _then: (value: any) => any;
+  private _shouldBe: string | number | boolean | null;
 
   constructor(private _name: string | null, options?: any) {
     this._then = options?.then;
+    this._shouldBe = options?.shouldBe ?? null;
   }
 
   abstract execute(buffer: Buffer, readerState: ReaderState): number | string | boolean;
@@ -21,6 +23,12 @@ abstract class ThenableInstruction implements Instruction {
       return value;
     }
   }
+
+  protected check(value: any): void {
+    if (this._shouldBe != null && value != this._shouldBe) {
+      throw new ParsingError(`Expected ${this.name} to be ${this._shouldBe} but was ${value}`);
+    }
+  }
 }
 
 export abstract class NumericDataType extends ThenableInstruction {
@@ -29,14 +37,22 @@ export abstract class NumericDataType extends ThenableInstruction {
   abstract bitSize: () => number;
 
   public execute(buffer: Buffer, readerState: ReaderState): number {
+    this.assertAtByteBoundary(readerState);
     const valueFunction = (readerState.mode === Mode.BE) ? this.be : this.le;
     const boundFunction = valueFunction.bind(buffer);
     const value = boundFunction(readerState.offset.bytes);
     const thennedValue = this.then(value);
+    this.check(thennedValue);
     if (this.name) {
       readerState.result[this.name] = thennedValue;
     }
     return thennedValue;
+  }
+
+  private assertAtByteBoundary(readerState: ReaderState): void {
+    if (readerState.offset.bits !== 0) {
+      throw new ParsingError(`Buffer position is not at a byte boundary (bit offset ${readerState.offset.bits}). Do you need to use pad()?`)
+    }
   }
 
   get size() {
@@ -131,6 +147,7 @@ export class Text extends ThenableInstruction {
       }
     }
     const value = this.then(workingBuffer.toString(this.encoding));
+    this.check(value);
     if (this.name) {
       readerState.result[this.name] = value;
     }
@@ -140,21 +157,6 @@ export class Text extends ThenableInstruction {
 
   get size() {
     return this._size * 8;
-  }
-}
-
-export class Bool extends ThenableInstruction {
-  execute(buffer: Buffer, readerState: ReaderState): string | number | boolean {
-    const value = buffer.readUInt8(readerState.offset.bytes);
-    const result = ((value >> (7 - readerState.offset.bits)) & 0x01) === 1;
-    if (this.name) {
-      readerState.result[this.name] = result;
-    }
-    return result;
-  }
-
-  get size() {
-    return 1;
   }
 }
 
@@ -174,6 +176,7 @@ export abstract class Bits extends ThenableInstruction {
     const bitsRead = bytesToRead * 8;
     const bitMask = ((2 ** this.size) - 1);
     const result = ((value >> (bitsRead - this.size - readerState.offset.bits)) & bitMask);
+    this.check(result);
     if (this.name) {
       readerState.result[this.name] = result;
     }
@@ -182,6 +185,25 @@ export abstract class Bits extends ThenableInstruction {
 
   get size() {
     return this._size;
+  }
+}
+
+export class Bool extends Bits {
+  constructor(name: string | null, options?: any) {
+    super(name, {...options, size: 1} )
+  }
+
+  execute(buffer: Buffer, readerState: ReaderState): string | number | boolean {
+    const value = super.execute(buffer, readerState);
+    const boolValue = value === 1;
+    if (this.name) {
+      readerState.result[this.name] = boolValue;
+    }
+    return boolValue;
+  }
+
+  get size() {
+    return 1;
   }
 }
 
@@ -224,6 +246,60 @@ export class Bits6 extends Bits {
 export class Bits7 extends Bits {
   constructor(name: string | null, options?: any) {
     super(name, {...options, size: 7} )
+  }
+}
+
+export class Bits8 extends Bits {
+  constructor(name: string | null, options?: any) {
+    super(name, {...options, size: 8} )
+  }
+}
+
+export class Bits9 extends Bits {
+  constructor(name: string | null, options?: any) {
+    super(name, {...options, size: 9} )
+  }
+}
+
+export class Bits10 extends Bits {
+  constructor(name: string | null, options?: any) {
+    super(name, {...options, size: 10} )
+  }
+}
+
+export class Bits11 extends Bits {
+  constructor(name: string | null, options?: any) {
+    super(name, {...options, size: 11} )
+  }
+}
+
+export class Bits12 extends Bits {
+  constructor(name: string | null, options?: any) {
+    super(name, {...options, size: 12} )
+  }
+}
+
+export class Bits13 extends Bits {
+  constructor(name: string | null, options?: any) {
+    super(name, {...options, size: 13} )
+  }
+}
+
+export class Bits14 extends Bits {
+  constructor(name: string | null, options?: any) {
+    super(name, {...options, size: 14} )
+  }
+}
+
+export class Bits15 extends Bits {
+  constructor(name: string | null, options?: any) {
+    super(name, {...options, size: 15} )
+  }
+}
+
+export class Bits16 extends Bits {
+  constructor(name: string | null, options?: any) {
+    super(name, {...options, size: 16} )
   }
 }
 
