@@ -1,5 +1,5 @@
 import { PayloadSpec } from '../payload_spec'
-import { Text, Int8, Int16, UInt8, Bit } from '../types';
+import { Text, Int8, Int16, UInt8, Bit, Bits2, Bits3, Bits4, Bits5, Bits6, Bits7, Bool } from '../types';
 
 describe('Text', () => {
   it('reads text as ascii', () => {
@@ -91,15 +91,59 @@ describe('Text', () => {
   })
 })
 
+
+describe('Bool', () => {
+  it('retrieves a single bit from the field as a boolean', () => {
+    const spec = new PayloadSpec();
+
+    spec.field('enabled', Bool);
+
+    const result = spec.exec(Buffer.from([0x80]));
+
+    expect(result.enabled).toBe(true);
+  })
+
+  it('can read multiple bools in a row', () => {
+    const spec = new PayloadSpec();
+
+    spec.field('enabled', Bool)
+        .field('ledOff', Bool)
+        .field('releaseTheHounds', Bool);
+
+    const result = spec.exec(Buffer.from([0xA0]));
+
+    expect(result.enabled).toBe(true);
+    expect(result.ledOff).toBe(false);
+    expect(result.releaseTheHounds).toBe(true);
+
+  });
+
+  it('can read bools after reading bytes', () => {
+    const spec = new PayloadSpec();
+
+    spec.field('firstByte', UInt8)
+        .field('secondByte', UInt8)
+        .field('enabled', Bool)
+        .field('ledOff', Bool)
+        .field('releaseTheHounds', Bool)
+
+    const result = spec.exec(Buffer.from([0x01, 0x02, 0xA0]))
+
+    expect(result.enabled).toBe(true);
+    expect(result.ledOff).toBe(false);
+    expect(result.releaseTheHounds).toBe(true);
+  })
+});
+
 describe('Bit', () => {
-  it('retrieves a single bit from the field', () => {
+  it('retrieves a single bit from the field as 0 or 1', () => {
     const spec = new PayloadSpec();
 
     spec.field('enabled', Bit);
 
     const result = spec.exec(Buffer.from([0x80]));
 
-    expect(result.enabled).toBe(true);
+    expect(result.enabled).toBe(1);
   })
 
   it('can read multiple bits in a row', () => {
@@ -111,9 +155,9 @@ describe('Bit', () => {
 
     const result = spec.exec(Buffer.from([0xA0]));
 
-    expect(result.enabled).toBe(true);
-    expect(result.ledOff).toBe(false);
-    expect(result.releaseTheHounds).toBe(true);
+    expect(result.enabled).toBe(1);
+    expect(result.ledOff).toBe(0);
+    expect(result.releaseTheHounds).toBe(1);
 
   });
 
@@ -128,8 +172,33 @@ describe('Bit', () => {
 
     const result = spec.exec(Buffer.from([0x01, 0x02, 0xA0]))
 
-    expect(result.enabled).toBe(true);
-    expect(result.ledOff).toBe(false);
-    expect(result.releaseTheHounds).toBe(true);
+    expect(result.enabled).toBe(1);
+    expect(result.ledOff).toBe(0);
+    expect(result.releaseTheHounds).toBe(1);
   })
 });
+
+describe('Bits', () => {
+  it('has aliases for taking 2-7 bits', async () => {
+    const spec = new PayloadSpec()
+      .field('bits2', Bits2)
+      .field('bits3', Bits3)
+      .field('bits4', Bits4)
+      .field('bits5', Bits5)
+      .field('bits6', Bits6)
+      .field('bits7', Bits7)
+      .pad()
+      .field('check', UInt8);
+
+    const result = spec.exec(Buffer.from([0xA5, 0x32, 0x7F, 0xC3, 0x77]))
+
+    expect(result.bits2).toBe(2);
+    expect(result.bits3).toBe(4);
+    expect(result.bits4).toBe(10);
+    expect(result.bits5).toBe(12);
+    expect(result.bits6).toBe(39);
+    expect(result.bits7).toBe(126);
+
+    expect(result.check).toBe(119);
+  });
+})

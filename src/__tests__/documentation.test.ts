@@ -1,5 +1,5 @@
 import { PayloadSpec, Mode } from '../payload_spec';
-import { UInt32, UInt8, Float, Text, UInt16, Bit, Int8 } from '../types';
+import { UInt32, UInt8, Float, Text, UInt16, Bit, Int8, Bool, Bits4, Bits2, Bits5 } from '../types';
 
 describe('Documentation examples', () => {
   test('The quick start', () => {
@@ -29,12 +29,12 @@ describe('Documentation examples', () => {
     expect(result.count1dp).toBe(3.1);
   })
 
-  test('Bit example', () => {
+  test('Bool example', () => {
     const result = 
       new PayloadSpec()
-        .field('enabled', Bit)
-        .field('ledOff', Bit)
-        .field('releaseTheHounds', Bit)
+        .field('enabled', Bool)
+        .field('ledOff', Bool)
+        .field('releaseTheHounds', Bool)
         .exec(Buffer.from([0xA0]));
 
     expect(result.enabled).toBe(true);
@@ -43,6 +43,22 @@ describe('Documentation examples', () => {
 
   })
   
+  test('Bits example', () => {
+    const result = 
+      new PayloadSpec()
+        .field('enabled', Bit)
+        .field('mode', Bits2)
+        .field('frequency', Bits4)
+        .field('days', Bits5)
+        .exec(Buffer.from([0xD3, 0x3A]));
+
+    expect(result.enabled).toBe(1);
+    expect(result.mode).toBe(2);
+    expect(result.frequency).toBe(9);
+    expect(result.days).toBe(19);
+
+  })
+
   test('fixed size text', () => {
     const result = 
       new PayloadSpec()
@@ -130,7 +146,7 @@ describe('Documentation examples', () => {
   test('pad example', () => {
     const result =
       new PayloadSpec()
-        .field('enabled', Bit).pad()
+        .field('enabled', Bool).pad()
         .field('count', Int8)
         .exec(Buffer.from([0x80, 0x02]))
     

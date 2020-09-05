@@ -1,5 +1,5 @@
 import { PayloadSpec, Mode } from '../payload_spec';
-import { UInt8, Int8, UInt16, Float, UInt32, Text, Bit } from '../types';
+import { UInt8, Int8, UInt16, Float, UInt32, Text, Bit, Bool } from '../types';
 
 describe('Simple fields', () => {
   it('reads fields in order from the buffer', () => {
@@ -140,7 +140,7 @@ describe('padding', () => {
   it('can be used to align to the byte boundary', () => {
     const result =
       new PayloadSpec()
-        .field('enabled', Bit).pad()
+        .field('enabled', Bool).pad()
         .field('count', Int8)
         .exec(Buffer.from([0x80, 0x02]))
     
@@ -149,7 +149,7 @@ describe('padding', () => {
   })
 })
 
-describe('when', () => {
+describe('if', () => {
   it('evaluates conditional block', () => {
     const messageType1 = 
       new PayloadSpec()
@@ -168,6 +168,27 @@ describe('when', () => {
     const result2 = mainSpec.exec(Buffer.from([0x00, 0x02]));
 
     expect(result2.type).toBe(0);
-    expect(result2.a1).toBeUndefined
+    expect(result2.a1).toBeUndefined();
+  })
+
+  it('can accept PayloadSpec created inline', () => {
+
+    const mainSpec = 
+      new PayloadSpec()
+        .field('type', UInt8)
+        .if((r) => r.type === 1, new PayloadSpec()
+          .field('a1', UInt8)
+        )
+
+    const result1 = mainSpec.exec(Buffer.from([0x01, 0x02]));
+
+    expect(result1.type).toBe(1);
+    expect(result1.a1).toBe(2);
   })
 })
+
+describe('include', () => {
+  it('evaluates another spec if expression is true', () => {
+
+  })
+});

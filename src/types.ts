@@ -143,7 +143,7 @@ export class Text extends ThenableInstruction {
   }
 }
 
-export class Bit extends ThenableInstruction {
+export class Bool extends ThenableInstruction {
   execute(buffer: Buffer, readerState: ReaderState): string | number | boolean {
     const value = buffer.readUInt8(readerState.offset.bytes);
     const result = ((value >> (7 - readerState.offset.bits)) & 0x01) === 1;
@@ -155,5 +155,74 @@ export class Bit extends ThenableInstruction {
 
   get size() {
     return 1;
+  }
+}
+
+export abstract class Bits extends ThenableInstruction {
+
+  private _size: number;
+
+  constructor(name: string | null, options?: any) {
+    super(name, options);
+    this._size = options.size;
+  }
+
+  execute(buffer: Buffer, readerState: ReaderState): string | number | boolean {
+    const bytesToRead = Math.ceil((readerState.offset.bits + this.size) / 8);
+    const value = buffer.readUIntBE(readerState.offset.bytes, bytesToRead);
+
+    const bitsRead = bytesToRead * 8;
+    const bitMask = ((2 ** this.size) - 1);
+    const result = ((value >> (bitsRead - this.size - readerState.offset.bits)) & bitMask);
+    if (this.name) {
+      readerState.result[this.name] = result;
+    }
+    return result;
+  }
+
+  get size() {
+    return this._size;
+  }
+}
+
+export class Bit extends Bits {
+  constructor(name: string | null, options?: any) {
+    super(name, {...options, size: 1} )
+  }
+}
+
+export class Bits2 extends Bits {
+  constructor(name: string | null, options?: any) {
+    super(name, {...options, size: 2} )
+  }
+}
+
+export class Bits3 extends Bits {
+  constructor(name: string | null, options?: any) {
+    super(name, {...options, size: 3} )
+  }
+}
+
+export class Bits4 extends Bits {
+  constructor(name: string | null, options?: any) {
+    super(name, {...options, size: 4} )
+  }
+}
+
+export class Bits5 extends Bits {
+  constructor(name: string | null, options?: any) {
+    super(name, {...options, size: 5} )
+  }
+}
+
+export class Bits6 extends Bits {
+  constructor(name: string | null, options?: any) {
+    super(name, {...options, size: 6} )
+  }
+}
+
+export class Bits7 extends Bits {
+  constructor(name: string | null, options?: any) {
+    super(name, {...options, size: 7} )
   }
 }

@@ -53,23 +53,34 @@ expect(result.count3dp).toBe(3.142);
 expect(result.count1dp).toBe(3.1);
 ```
 
-Bit
+Bool
 ---
 
-The `Bit` type reads a single bit from the buffer, as a boolean value
+The `Bool` type reads a single bit from the buffer, as a boolean value
 
 ```
 const result = 
     new PayloadSpec()
-      .field('enabled', Bit)
-      .field('ledOff', Bit)
-      .field('releaseTheHounds', Bit)
+      .field('enabled', Bool)
+      .field('ledOff', Bool)
+      .field('releaseTheHounds', Bool)
       .exec(Buffer.from([0xA0]));
 
 expect(result.enabled).toBe(true);
 expect(result.ledOff).toBe(false);
 expect(result.releaseTheHounds).toBe(true);
 ```
+
+Bit, Bits[2-7]
+---
+
+The `Bit` type reads a single bit from the buffer, as a 0 or 1.  The types `Bits2`, `Bits3`, `Bits4`, `Bits5`, `Bits6`, and `Bits7` read the corresponding number of bits and returns them as unsigned integers. Note that this reads across byte boundaries where necessary
+
+```
+
+```
+
+
 
 Text
 ---
