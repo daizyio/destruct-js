@@ -148,3 +148,26 @@ describe('padding', () => {
     expect(result.count).toBe(2);
   })
 })
+
+describe('when', () => {
+  it('evaluates conditional block', () => {
+    const messageType1 = 
+      new PayloadSpec()
+        .field('a1', UInt8)
+
+    const mainSpec = 
+      new PayloadSpec()
+        .field('type', UInt8)
+        .if((r) => r.type === 1, messageType1)
+
+    const result1 = mainSpec.exec(Buffer.from([0x01, 0x02]));
+
+    expect(result1.type).toBe(1);
+    expect(result1.a1).toBe(2);
+
+    const result2 = mainSpec.exec(Buffer.from([0x00, 0x02]));
+
+    expect(result2.type).toBe(0);
+    expect(result2.a1).toBeUndefined
+  })
+})

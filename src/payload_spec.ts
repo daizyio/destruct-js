@@ -27,6 +27,11 @@ export class PayloadSpec {
     return this;
   }
 
+  public if(conditional: (r: any) => boolean, otherSpec: PayloadSpec): PayloadSpec {
+    this.instructions.push(new IfInstruction(conditional, otherSpec));
+    return this;
+  }
+
   public pad(): PayloadSpec {
     this.instructions.push(new PadInstruction());
     return this;
@@ -136,6 +141,21 @@ class DeriveInstruction implements Instruction {
 
   get size() {
     return 0;
+  }
+}
+
+class IfInstruction extends NullInstruction {
+  constructor(private conditional: (r: any) => boolean, private otherSpec: PayloadSpec) {
+    super();
+  }
+
+  public execute(buffer: Buffer, readerState: ReaderState) {
+    const shouldExec = this.conditional({ ...readerState.result, ...readerState.storedVars });
+
+    if (shouldExec) {
+      const subResult = this.otherSpec.exec(buffer.slice(readerState.offset.bytes));
+      Object.assign(readerState.result, subResult);
+    }
   }
 }
 
