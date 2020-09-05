@@ -6,7 +6,7 @@ destruct-js
 destruct-js is a Javascript library for reading binary data from Buffers using a declarative specification, inspired by [construct-js](https://github.com/francisrstokes/construct-js). 
 
 Usage
----
+===
 
 A quick example:
 
@@ -36,7 +36,7 @@ const beSpec = new PayloadSpec();        // big endian is the default
 Each field in the buffer is specified in order.  Each field has a name, and a data type.  When you call `spec.exec(buffer)`, the buffer is read "left to right", filling a JSON object with field names as keys, which is returned to you once it's finished.  Your spec does not need to read the whole buffer if you don't need to, but obviously you will get an error if you try and read beyond the end of the buffer.
 
 Numeric Data Types
----
+===
 
 All the data types you would expect to see are supported, and if you're reading this probably do not need explanation - `Int8`, `UInt8`, `Int16`, `UInt16`, `Int32`, `UInt32`, `Float`, `Double`.
 
@@ -167,38 +167,15 @@ const result =
     .exec(Buffer.from([0xCA, 0xFE, 0xBA, 0xBE]))
 ```
 
-Other instructions
+Payload Specs
+===
+
+The PayloadSpec object contains a number of methods that allow you to richly state the specification of your payload. As well as specifying fields using `.field()`, you can use other instructions to modify behaviour of the parser.
+
+Variable storage
 ---
 
-As well as specifying fields using `.field()`, you can use other instructions to modify behaviour of the parser.
-
-`skip(bytes: number | NumericDataType)` - skips the specified number of bytes, or the size of the specified numeric data type.
-
-```
-const result = 
-  new PayloadSpec()
-    .field('firstByte', UInt8)
-    .skip(UInt16)               // same as .skip(2)
-    .field('lastByte', UInt8)
-    .exec(Buffer.from([0xFF, 0x00, 0x00, 0x01]));
-
-expect(result.firstByte).toBe(255);
-expect(result.lastByte).toBe(1);
-```
-
-`endianness(mode: Mode)` - switches the buffer to reading the specified endianness *from this point* i.e. it does not apply to previously read values.
-
-```
-const result = 
-  new PayloadSpec(Mode.BE)
-    .field('countBE', UInt16)
-    .endianness(Mode.LE)
-    .field('countLE', UInt16)
-    .exec(Buffer.from([0xFF, 0x30, 0x30, 0xFF, 0xFF, 0x30]))
-  
-expect(result.countBE).toBe(65328);
-expect(result.countLE).toBe(65328);
-```
+Internally, the spec maintains a result object, and also another map of intermediate variables that may be needed in later parsing but should not appear in the final result.
 
 `store(name: string, type: DataType)` - fetches a value from the buffer in the same way as `.field()`, but stores the value internally instead of adding to the final output. `.store()` can be used in combination with `.derive()` to use values in later calculations.
 
@@ -226,6 +203,35 @@ const result =
   expect(result.doubleCount).toBe(4);
 ```
 
+Control Flow
+---
+
+You can conditionally parse parts of the buffer using some control statements that mirror standard JS.
+
+
+`if((r: any) => boolean, PayloadSpec)` - executes the specified `PayloadSpec` if the function evaluates to true. All state in the original spec (variables, position etc.) is passed to the new spec, and control and state is returned to the original spec once the new spec (and any specs executed within that) are completed.
+
+`lookup((r: any) => string | number | boolean, {[k:string]: PayloadSpec})` - looks up the value returned from the function in a map, and executes the associated spec.  Note that the function may return any primitive, but it will be converted to a string, and the keys of the map *must* be strings. 
+
+Position control
+---
+
+When parsing the buffer, you may need to explicitly set the current position
+
+`skip(bytes: number | NumericDataType)` - skips the specified number of bytes, or the size of the specified numeric data type.
+
+```
+const result = 
+  new PayloadSpec()
+    .field('firstByte', UInt8)
+    .skip(UInt16)               // same as .skip(2)
+    .field('lastByte', UInt8)
+    .exec(Buffer.from([0xFF, 0x00, 0x00, 0x01]));
+
+expect(result.firstByte).toBe(255);
+expect(result.lastByte).toBe(1);
+```
+
 `pad()` - moves the buffer position to the next byte boundary, for example if you've read a number of `Bit`s
 
 ```
@@ -237,4 +243,18 @@ const result =
 
 expect(result.enabled).toBe(true);
 expect(result.count).toBe(2);
+```
+
+`endianness(mode: Mode)` - switches the buffer to reading the specified endianness *from this point* i.e. it does not apply to previously read values.
+
+```
+const result = 
+  new PayloadSpec(Mode.BE)
+    .field('countBE', UInt16)
+    .endianness(Mode.LE)
+    .field('countLE', UInt16)
+    .exec(Buffer.from([0xFF, 0x30, 0x30, 0xFF, 0xFF, 0x30]))
+  
+expect(result.countBE).toBe(65328);
+expect(result.countLE).toBe(65328);
 ```
