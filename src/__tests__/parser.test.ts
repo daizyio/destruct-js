@@ -323,3 +323,37 @@ describe('should be', () => {
     expect(() => spec.exec(Buffer.from([0x00]))).toThrowError(new ParsingError('Expected bits to be 4 but was 0'));
   })
 });
+
+describe('lookup', () => {
+  it('looks up a spec in a table', () => {
+    const specOne = 
+      new PayloadSpec()
+        .field('one', UInt8)
+
+    const specTwo =
+      new PayloadSpec()
+        .skip(1)
+        .field('two', UInt8)
+
+    const mainSpec =
+      new PayloadSpec()
+        .field('type', UInt8)
+        .lookup((r) => r.type, {
+          '128': specOne,
+          '0': specTwo
+        });
+
+    const result = mainSpec.exec(Buffer.from([0x80, 0x01, 0x02]));
+
+    expect(result.type).toBe(128);
+    expect(result.one).toBe(1);
+    expect(result.two).toBeUndefined();
+
+    const result2 = mainSpec.exec(Buffer.from([0x00, 0x01, 0x02]));
+
+    expect(result2.type).toBe(0);
+    expect(result2.one).toBeUndefined();
+    expect(result2.two).toBe(2);
+
+  });
+});

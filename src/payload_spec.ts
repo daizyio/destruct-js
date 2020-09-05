@@ -45,6 +45,12 @@ export class PayloadSpec {
     return this;
   }
 
+  
+  public lookup(valueProvider: ValueProvider, valueMap: {[k: string]: PayloadSpec}) {
+    this.instructions.push(new LookupInstruction(valueProvider, valueMap));
+    return this;
+  }
+
   public pad(): PayloadSpec {
     this.instructions.push(new PadInstruction());
     return this;
@@ -167,6 +173,25 @@ class IfInstruction extends NullInstruction {
 
     if (shouldExec) {
       const subResult = this.otherSpec.exec(buffer, readerState);
+      Object.assign(readerState.result, subResult);
+    }
+  }
+}
+
+class LookupInstruction extends NullInstruction {
+  constructor(private valueProvider: ValueProvider, private valueMap: {[k:string]: PayloadSpec}) {
+    super();
+  }
+
+  public execute(buffer: Buffer, readerState: ReaderState) {
+    const value = this.valueProvider({ ...readerState.result, ...readerState.storedVars });
+
+    if (value == null) return;
+
+    const otherSpec = this.valueMap[value.toString()];
+
+    if (otherSpec) {
+      const subResult = otherSpec.exec(buffer, readerState);
       Object.assign(readerState.result, subResult);
     }
   }
