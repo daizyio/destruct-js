@@ -55,8 +55,8 @@ export class PayloadSpec {
     return this;
   }
 
-  public exec(data: Buffer): any {
-    const reader = new BufferReader(this.mode, this.instructions);
+  public exec(data: Buffer, initialState?: ReaderState): any {
+    const reader = new BufferReader(this.mode, this.instructions, initialState);
   
     return reader.read(data);
   }
@@ -166,7 +166,7 @@ class IfInstruction extends NullInstruction {
     const shouldExec = this.predicate({ ...readerState.result, ...readerState.storedVars });
 
     if (shouldExec) {
-      const subResult = this.otherSpec.exec(buffer.slice(readerState.offset.bytes));
+      const subResult = this.otherSpec.exec(buffer, readerState);
       Object.assign(readerState.result, subResult);
     }
   }
@@ -181,7 +181,10 @@ class BufferReader {
   private byteOffset: number = 0;
   private bitOffset: number = 0;
 
-  constructor(private _mode: Mode = Mode.BE, private instructions: Instruction[]) {}
+  constructor(private _mode: Mode = Mode.BE, private instructions: Instruction[], initialState?: ReaderState) {
+    this.byteOffset = initialState?.offset?.bytes || 0;
+    this.bitOffset = initialState?.offset?.bits || 0;
+  }
   
   public read(buffer: Buffer): any {
     const result: any = {};

@@ -1,5 +1,5 @@
 import { PayloadSpec, Mode, ParsingError } from '../payload_spec';
-import { UInt8, Int8, UInt16, Float, UInt32, Text, Bit, Bool, Bits3, Bits5, Bits2 } from '../types';
+import { UInt8, Int8, UInt16, Float, UInt32, Text, Bit, Bool, Bits3, Bits5, Bits2, Bits8 } from '../types';
 
 describe('Simple fields', () => {
   it('reads fields in order from the buffer', () => {
@@ -204,6 +204,21 @@ describe('if', () => {
 
     expect(result1.type).toBe(1);
     expect(result1.a1).toBe(2);
+  });
+
+  it('maintains a bit offset', () => {
+
+    const mainSpec = 
+      new PayloadSpec()
+        .field('type', Bits3)
+        .if((r) => true, new PayloadSpec()
+          .field('a1', Bits8)
+        )
+
+    const result1 = mainSpec.exec(Buffer.from([0xA1, 0xD2]));
+
+    expect(result1.type).toBe(5);
+    expect(result1.a1).toBe(14);
   })
 })
 
