@@ -46,7 +46,7 @@ export class PayloadSpec {
   }
 
   
-  public lookup(valueProvider: ValueProvider, valueMap: {[k: string]: PayloadSpec}) {
+  public switch(valueProvider: ValueProvider, valueMap: {[k: string]: PayloadSpec}) {
     this.instructions.push(new LookupInstruction(valueProvider, valueMap));
     return this;
   }
@@ -188,7 +188,7 @@ class LookupInstruction extends NullInstruction {
 
     if (value == null) return;
 
-    const otherSpec = this.valueMap[value.toString()];
+    const otherSpec = this.valueMap[value.toString()] ?? this.valueMap['default'];
 
     if (otherSpec) {
       const subResult = otherSpec.exec(buffer, readerState);

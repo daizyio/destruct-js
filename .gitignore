@@ -2,3 +2,4 @@ dist
 *.swp
 node_modules
 *.code-workspace
+ideas.txt

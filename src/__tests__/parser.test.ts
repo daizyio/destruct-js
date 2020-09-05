@@ -338,7 +338,7 @@ describe('lookup', () => {
     const mainSpec =
       new PayloadSpec()
         .field('type', UInt8)
-        .lookup((r) => r.type, {
+        .switch((r) => r.type, {
           '128': specOne,
           '0': specTwo
         });
@@ -356,4 +356,29 @@ describe('lookup', () => {
     expect(result2.two).toBe(2);
 
   });
+
+  it('uses the default option if the lookup does not succeed', () => {
+    const specOne = 
+      new PayloadSpec()
+        .field('one', UInt8)
+
+    const specTwo =
+      new PayloadSpec()
+        .skip(1)
+        .field('two', UInt8)
+
+    const mainSpec =
+      new PayloadSpec()
+        .field('type', UInt8)
+        .switch((r) => r.type, {
+          128: specOne,
+          default: specTwo
+        });
+
+    const result = mainSpec.exec(Buffer.from([0x00, 0x01, 0x02]));
+
+    expect(result.type).toBe(0);
+    expect(result.one).toBeUndefined;
+    expect(result.two).toBe(2);
+  })
 });
