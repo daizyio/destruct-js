@@ -226,3 +226,19 @@ export class Bits7 extends Bits {
     super(name, {...options, size: 7} )
   }
 }
+
+export class Literal implements Instruction {
+  constructor(private _name: string, private value: string | number | boolean) {}
+
+  execute(buffer: Buffer, readerState: ReaderState) {
+    readerState.result[this.name] = this.value;
+  }
+
+  get size() {
+    return 0;
+  }
+
+  get name() {
+    return this._name;
+  }
+}

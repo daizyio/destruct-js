@@ -77,10 +77,19 @@ Bit, Bits[2-7]
 The `Bit` type reads a single bit from the buffer, as a 0 or 1.  The types `Bits2`, `Bits3`, `Bits4`, `Bits5`, `Bits6`, and `Bits7` read the corresponding number of bits and returns them as unsigned integers. Note that this reads across byte boundaries where necessary
 
 ```
+const result = 
+  new PayloadSpec()
+    .field('enabled', Bit)
+    .field('mode', Bits2)
+    .field('frequency', Bits4)
+    .field('days', Bits5)
+    .exec(Buffer.from([0xD3, 0x3A]));
 
+expect(result.enabled).toBe(1);
+expect(result.mode).toBe(2);
+expect(result.frequency).toBe(9);
+expect(result.days).toBe(19);
 ```
-
-
 
 Text
 ---
@@ -118,10 +127,25 @@ const result =
 expect(result.name).toBe('bob123');
 ```
 
-Using `then`
+Literals
 ---
 
-All data types support a `then` option to do some post processing on the value.  The `then` option should be a function that takes the value read from the buffer as input, and outputs some other value, which may or may not be of the same type.
+If necessary, you can add a literal string, number or boolean value by specifying it as the second argument to a `.field` or `.store` call. A literal value does not consume any data from the `Buffer`.
+
+```
+const result =
+  new PayloadSpec()
+    .field('type', 'install')
+    .store('pi', 3.14)
+    .exec(Buffer.from([0x00]))
+
+expect(result.type).toBe('install')
+```
+
+Options
+---
+
+`then: (any) => any` - All data types support a `then` option to do some post processing on the value.  The `then` option should be a function that takes the value read from the buffer as input, and outputs some other value, which may or may not be of the same type.
 
 ```
 const result = 

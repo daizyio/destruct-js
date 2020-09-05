@@ -1,4 +1,10 @@
-import { NumericDataType } from './types';
+import { NumericDataType, Literal } from './types';
+
+type InstructionCtor =  new (name: string | null, options?: any) => Instruction;
+type NumericInstructionCtor = (new (name: string | null) => NumericDataType);
+type Predicate = (r: any) => boolean;
+type ValueProvider = (r: any) => Primitive | null;
+type Primitive = number | string | boolean;
 
 export class PayloadSpec {
 
@@ -6,13 +12,20 @@ export class PayloadSpec {
 
   constructor(private mode: Mode = Mode.BE) {}
 
-  public field(name: string, Type: new (name: string | null, options?: any) => Instruction, options?: any): PayloadSpec {
-    this.instructions.push(new Type(name, options));
+  public field(name: string, Type: InstructionCtor | Primitive, options?: any): PayloadSpec {
+    if (typeof Type === 'function') {
+      this.instructions.push(new Type(name, options));
+    } else {
+      this.instructions.push(new Literal(name, Type))
+    }
     return this;
   }
 
-  public store(name: string, Type: new (name: string | null, options?: any) => Instruction, options?: any): PayloadSpec {
-    this.instructions.push(new Ignorable(new Type(name, options)));
+  public store(name: string, Type: InstructionCtor | Primitive, options?: any): PayloadSpec {
+    const wrappedInstruction = typeof Type === 'function' ?
+                                  new Type(name, options) 
+                                : new Literal(name, Type)
+    this.instructions.push(new Ignorable(wrappedInstruction));
     return this;
   }
 
@@ -21,14 +34,14 @@ export class PayloadSpec {
     return this;
   }
 
-  public skip(sizable: number | (new (name: string | null) => NumericDataType)): PayloadSpec {
+  public skip(sizable: number | NumericInstructionCtor): PayloadSpec {
     const skipBytes: number = (typeof sizable === 'number') ? sizable : Math.floor(new sizable(null).bitSize() / 8);
     this.instructions.push(new SkipInstruction(skipBytes))
     return this;
   }
 
-  public if(conditional: (r: any) => boolean, otherSpec: PayloadSpec): PayloadSpec {
-    this.instructions.push(new IfInstruction(conditional, otherSpec));
+  public if(predicate: Predicate, otherSpec: PayloadSpec): PayloadSpec {
+    this.instructions.push(new IfInstruction(predicate, otherSpec));
     return this;
   }
 
@@ -126,7 +139,7 @@ class PadInstruction extends NullInstruction {
 }
 
 class DeriveInstruction implements Instruction {
-  constructor(private _name: string, private callback: (r: any) => number | string | null) {}
+  constructor(private _name: string, private callback: ValueProvider) {}
 
   public execute(buffer: Buffer, readerState: ReaderState) {
     const combinedVars = { ...readerState.result, ...readerState.storedVars }
@@ -145,12 +158,12 @@ class DeriveInstruction implements Instruction {
 }
 
 class IfInstruction extends NullInstruction {
-  constructor(private conditional: (r: any) => boolean, private otherSpec: PayloadSpec) {
+  constructor(private predicate: Predicate, private otherSpec: PayloadSpec) {
     super();
   }
 
   public execute(buffer: Buffer, readerState: ReaderState) {
-    const shouldExec = this.conditional({ ...readerState.result, ...readerState.storedVars });
+    const shouldExec = this.predicate({ ...readerState.result, ...readerState.storedVars });
 
     if (shouldExec) {
       const subResult = this.otherSpec.exec(buffer.slice(readerState.offset.bytes));

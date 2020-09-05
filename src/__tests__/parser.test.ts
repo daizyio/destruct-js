@@ -187,8 +187,55 @@ describe('if', () => {
   })
 })
 
-describe('include', () => {
-  it('evaluates another spec if expression is true', () => {
+describe('literal value', () => {
+  it('puts a literal string in the output', () => {
+    const spec = 
+      new PayloadSpec()
+        .field('type', 'install')
 
-  })
+    const data = spec.exec(Buffer.from([0x00]));
+
+    expect(data.type).toBe('install');
+  });
+
+  it('puts a literal number in the output', () => {
+    const spec = 
+      new PayloadSpec()
+        .field('type', 23)
+        .field('float', 3.14)
+
+    const data = spec.exec(Buffer.from([0x00]));
+
+    expect(data.type).toBe(23);
+    expect(data.float).toBe(3.14);
+  });
+
+  it('puts a literal boolean in the output', () => {
+    const spec = 
+      new PayloadSpec()
+        .field('enabled', true)
+
+    const data = spec.exec(Buffer.from([0x00]));
+
+    expect(data.enabled).toBe(true);
+  });
+
+  it('can also be used with store', () => {
+    const spec =
+      new PayloadSpec()
+        .store('enabled', true)
+        .store('pi', 3.14)
+        .store('add', '1')
+        .derive('res', (r) => {
+          if(r.enabled) {
+            return r.pi - parseInt(r.add)
+          } else {
+            return r.pi + parseInt(r.add)
+          }
+        })
+
+    const data = spec.exec(Buffer.from([0x00]));
+
+    expect(data.res).toBe(2.14);
+  });
 });

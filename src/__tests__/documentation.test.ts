@@ -153,4 +153,14 @@ describe('Documentation examples', () => {
     expect(result.enabled).toBe(true);
     expect(result.count).toBe(2);
   })
+
+  test('literal example', () => {
+    const result =
+      new PayloadSpec()
+        .field('type', 'install')
+        .store('pi', 3.14)
+        .exec(Buffer.from([0x00]))
+
+    expect(result.type).toBe('install')
+  })
 })
