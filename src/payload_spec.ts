@@ -4,7 +4,8 @@ type InstructionCtor =  new (name: string | null, options?: any) => Instruction;
 type NumericInstructionCtor = (new (name: string | null) => NumericDataType);
 type Predicate = (r: any) => boolean;
 type ValueProvider = (r: any) => Primitive | null;
-type Primitive = number | string | boolean;
+export type Primitive = number | string | boolean;
+export type Encoding = 'ascii' | 'utf8' | 'utf-8' | 'utf16le' | 'ucs2' | 'ucs-2' | 'base64' | 'binary' | 'hex' | 'latin1';
 
 export class PayloadSpec {
 
@@ -12,7 +13,7 @@ export class PayloadSpec {
 
   constructor(private mode: Mode = Mode.BE) {}
 
-  public field(name: string, Type: InstructionCtor | Primitive, options?: any): PayloadSpec {
+  public field(name: string, Type: InstructionCtor | Primitive, options?: FieldOptions): PayloadSpec {
     if (typeof Type === 'function') {
       this.instructions.push(new Type(name, options));
     } else {
@@ -21,7 +22,7 @@ export class PayloadSpec {
     return this;
   }
 
-  public store(name: string, Type: InstructionCtor | Primitive, options?: any): PayloadSpec {
+  public store(name: string, Type: InstructionCtor | Primitive, options?: FieldOptions): PayloadSpec {
     const wrappedInstruction = typeof Type === 'function' ?
                                   new Type(name, options) 
                                 : new Literal(name, Type)
@@ -66,6 +67,15 @@ export class PayloadSpec {
   
     return reader.read(data);
   }
+}
+
+export interface FieldOptions {
+  terminator?: string | number;
+  dp?: number;
+  then?: (v: any) => Primitive;
+  shouldBe?: Primitive;
+  size?: number;
+  encoding?: Encoding; 
 }
 
 export type ReaderState = { result: any, storedVars: any, offset: { bytes: number, bits: number }, mode: Mode};
@@ -216,6 +226,8 @@ class BufferReader {
     const storedVars: any = {};
 
     for(const instruction of this.instructions) {
+      console.debug(`Executing instruction ${instruction.constructor.name} at position [${this.byteOffset}, ${this.bitOffset}]`)
+      
       if (instruction instanceof EndiannessInstruction) {
         this._mode = instruction.mode;
         continue;

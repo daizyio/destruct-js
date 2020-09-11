@@ -1,10 +1,10 @@
-import { Mode, Instruction, ReaderState, ParsingError } from './payload_spec';
+import { Mode, Instruction, ReaderState, ParsingError, FieldOptions, Primitive, Encoding } from './payload_spec';
 
 abstract class ThenableInstruction implements Instruction {
-  private _then: (value: any) => any;
+  private _then: ((value: Primitive) => Primitive) | undefined;
   private _shouldBe: string | number | boolean | null;
 
-  constructor(private _name: string | null, options?: any) {
+  constructor(private _name: string | null, options?: FieldOptions) {
     this._then = options?.then;
     this._shouldBe = options?.shouldBe ?? null;
   }
@@ -17,11 +17,8 @@ abstract class ThenableInstruction implements Instruction {
   }
 
   public then(value: any): any {
-    if (this._then) {
-      return this._then(value);
-    } else {
-      return value;
-    }
+    const thennedValue = this._then ? this._then(value) : value;
+    return thennedValue;
   }
 
   protected check(value: any): void {
@@ -119,8 +116,6 @@ export class Double extends FloatingPointDataType {
   public le = Buffer.prototype.readDoubleLE;
   public bitSize = () => 64;
 }
-
-type Encoding = 'ascii' | 'utf8' | 'utf-8' | 'utf16le' | 'ucs2' | 'ucs-2' | 'base64' | 'binary' | 'hex' | 'latin1';
 
 export class Text extends ThenableInstruction {
   private _size: number;
