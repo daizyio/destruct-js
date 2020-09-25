@@ -228,6 +228,10 @@ class BufferReader {
     for(const instruction of this.instructions) {
       console.debug(`Executing instruction ${instruction.constructor.name} at position [${this.byteOffset}, ${this.bitOffset}]`)
       
+      if (this.byteOffset >= buffer.length) {
+        throw new ParsingError('Reached end of buffer');
+      }
+
       if (instruction instanceof EndiannessInstruction) {
         this._mode = instruction.mode;
         continue;

@@ -140,6 +140,8 @@ export class Text extends ThenableInstruction {
         this._size = index + 1;
         workingBuffer = startingBuffer.slice(0, index);
       }
+    } else {
+      this._size = workingBuffer.length;
     }
     const value = this.then(workingBuffer.toString(this.encoding));
     this.check(value);

@@ -1,4 +1,4 @@
-import { PayloadSpec } from '../payload_spec'
+import { PayloadSpec, ParsingError } from '../payload_spec'
 import { Text, Int8, Int16, UInt8, Bit, Bits2, Bits3, Bits4, Bits5, Bits6, Bits7, Bool, Bits8, Bits9, Bits10, Bits11, Bits12, Bits13, Bits14, Bits15, Bits16 } from '../types';
 
 describe('Text', () => {
@@ -46,7 +46,7 @@ describe('Text', () => {
     expect(result.b64).toBe('44Om44OL44Kz44O844OJ');
   });
 
-  it('gives raw hex as text when hex encoding used', () => {
+  it('gives raw  hex as text when hex encoding used', () => {
     const spec = new PayloadSpec();
 
     spec.field('imei', Text, { size: 8, encoding: 'hex' });
@@ -68,6 +68,21 @@ describe('Text', () => {
     expect(result.one).toBe(50);
   });
 
+  it('includes terminator in offset', () => {
+
+    const spec = new PayloadSpec();
+
+    spec.field('one', Text, { terminator: 0x00 })
+        .field('two', Text, { terminator: 0x00 })
+        .field('three', Text, { terminator: 0x00 });
+    
+    const result = spec.exec(Buffer.from([0x31, 0x00, 0x32, 0x00, 0x33, 0x00]));
+
+    expect(result.one).toBe('1');
+    expect(result.two).toBe('2');
+    expect(result.three).toBe('3');
+  });
+
   it('reads to end of buffer if neither size nor terminator is specified', () => {
     const spec = new PayloadSpec();
 
@@ -78,6 +93,16 @@ describe('Text', () => {
 
     expect(result.name).toBe('bobbob');
     expect(result.one).toBe(50);
+  });
+
+  it('sets size if reading to end of buffer', () => {
+    const spec = new PayloadSpec();
+
+    spec.field('one', Int8)
+        .field('name', Text)
+        .field('error', Int8);
+    
+    expect(() => spec.exec(Buffer.from([0x32, 0x62, 0x6f, 0x62, 0x62, 0x6f, 0x62]))).toThrow(new ParsingError('Reached end of buffer'));
   });
 
   it('supports then function to do conversions', () => {
