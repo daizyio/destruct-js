@@ -1,3 +1,4 @@
+import { Encoding } from './pos_buffer';
 import { NumericDataType, Literal } from './types';
 
 type InstructionCtor =  new (name: string | null, options?: any) => Instruction;
@@ -5,7 +6,6 @@ type NumericInstructionCtor = (new (name: string | null) => NumericDataType);
 type Predicate = (r: any) => boolean;
 type ValueProvider = (r: any) => Primitive | null;
 export type Primitive = number | string | boolean;
-export type Encoding = 'ascii' | 'utf8' | 'utf-8' | 'utf16le' | 'ucs2' | 'ucs-2' | 'base64' | 'binary' | 'hex' | 'latin1';
 
 export class PayloadSpec {
 
@@ -228,13 +228,13 @@ class BufferReader {
     for(const instruction of this.instructions) {
       console.debug(`Executing instruction ${instruction.constructor.name} at position [${this.byteOffset}, ${this.bitOffset}]`)
       
-      if (this.byteOffset >= buffer.length) {
-        throw new ParsingError('Reached end of buffer');
-      }
-
       if (instruction instanceof EndiannessInstruction) {
         this._mode = instruction.mode;
         continue;
+      }
+      
+      if (this.byteOffset >= buffer.length && instruction.size > 0) {
+        throw new ParsingError('Reached end of buffer');
       }
 
       const readerState = { result, storedVars, mode: this._mode, offset: { bytes: this.byteOffset, bits: this.bitOffset } }

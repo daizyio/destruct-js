@@ -1,8 +1,8 @@
 import { Mode, PayloadSpec } from '../payload_spec';
 import PosBuffer from '../pos_buffer';
-import { UInt8, Int8, Int16, UInt16, Int32, UInt32, Float, Double } from '../types';
+import { UInt8, Int8, Int16, UInt16, Int32, UInt32, Float, Double, Text } from '../types';
 
-describe('a PosBuffer', () => {
+describe('Numeric types', () => {
   it('reads a UInt8', () => {
     const buffer = new PosBuffer([0xFF]);
 
@@ -49,6 +49,76 @@ describe('a PosBuffer', () => {
     const buffer = new PosBuffer([0x40, 0x09, 0x21, 0xCA, 0xC0, 0x83, 0x12, 0x6F]);
     
     expect(buffer.read(Double)).toBe(3.14150000000000018118839761883E0);
+  });
+});
+
+describe('Text', () => {
+  it('reads text as ascii', () => {
+    const buffer = new PosBuffer([0x62, 0x6f, 0x62]);
+
+    expect(buffer.read(Text)).toBe('bob');
+  });
+
+  it('sets offsets correctly', () => {
+    const buffer = new PosBuffer([0xFF, 0x30, 0x62, 0x6f, 0x62, 0xA0]);
+
+    expect(buffer.read(Int16)).toBe(-208);
+    expect(buffer.read(Text, { size: 3})).toBe('bob');
+    expect(buffer.read(UInt8)).toBe(160);
+  });
+
+  it('uses utf8 by default', () => {
+    const buffer = new PosBuffer([0xE3, 0x83, 0xA6, 0xE3, 0x83, 0x8B, 0xE3, 0x82, 0xB3, 0xE3, 0x83, 0xBC, 0xE3, 0x83, 0x89]);
+    
+    expect(buffer.read(Text, { size: 15 })).toBe('ユニコード');
+  });
+
+  it('can use other encodings', () => {
+    const buffer = new PosBuffer([0xE3, 0x83, 0xA6, 0xE3, 0x83, 0x8B, 0xE3, 0x82, 0xB3, 0xE3, 0x83, 0xBC, 0xE3, 0x83, 0x89]);
+
+    expect(buffer.read(Text, { size: 15, encoding: 'base64' })).toBe('44Om44OL44Kz44O844OJ');
+  });
+
+  it('gives raw  hex as text when hex encoding used', () => {
+    const buffer = new PosBuffer([0x36, 0x19, 0x24, 0x33, 0x12, 0x52, 0x10, 0x10]);
+
+    expect(buffer.read(Text, { size: 8, encoding: 'hex' })).toBe('3619243312521010');
+  })
+
+  it('can specify a terminator', () => {
+    const spec = new PayloadSpec();
+
+    spec.field('name', Text, { terminator: 0x00 })
+        .field('one', Int8);
+    
+    const buffer = new PosBuffer([0x62, 0x6f, 0x62, 0x00, 0x32]);
+
+    expect(buffer.read(Text, { terminator: 0x00 })).toBe('bob');
+    expect(buffer.read(Int8)).toBe(50);
+  });
+
+  it('includes terminator in offset', () => {    
+    const buffer = new PosBuffer([0x31, 0x00, 0x32, 0x00, 0x33, 0x00]);
+
+    expect(buffer.read(Text, { terminator: 0x00 })).toBe('1');
+    expect(buffer.read(Text, { terminator: 0x00 })).toBe('2');
+    expect(buffer.read(Text, { terminator: 0x00 })).toBe('3');
+  });
+
+  it('reads to end of buffer if neither size nor terminator is specified', () => {
+    const buffer = new PosBuffer([0x32, 0x62, 0x6f, 0x62, 0x62, 0x6f, 0x62]);
+
+    expect(buffer.read(Int8)).toBe(50);
+    expect(buffer.read(Text)).toBe('bobbob');
+    
+  });
+
+  it('sets size if reading to end of buffer', () => {
+    const buffer = new PosBuffer([0x32, 0x62, 0x6f, 0x62, 0x62, 0x6f, 0x62]);
+
+    expect(buffer.read(Int8)).toBe(50);
+    expect(buffer.read(Text)).toBe('bobbob');
+    expect(() => buffer.read(Int8)).toThrow(new Error('Attempt to read outside of the buffer'));
   });
 });
 
@@ -129,5 +199,17 @@ describe('Peeking', () => {
     const buffer = new PosBuffer([0xAE, 0xC4, 0x00, 0xC5, 0x33]);
 
     expect(buffer.peek(UInt8, 3)).toBe(197);
+  })
+
+  it('throws error if trying to peek at an invalid address', () => {
+    const buffer = new PosBuffer([0xAE, 0xCE]);
+    expect(() => buffer.peek(UInt8, 3)).toThrowError(new Error('Attempt to peek outside of the buffer'));
+    expect(() => buffer.peek(UInt8, -1)).toThrowError(new Error('Attempt to peek outside of the buffer'));
+  });
+
+  it('throws error if the datatype would read outside of the buffer', () => {
+    const buffer = new PosBuffer([0xAE, 0xC4]);
+    expect(buffer.peek(UInt16, 0)).toBe(44740);
+    expect(() => buffer.peek(UInt32, 0)).toThrowError(new Error('Attempt to peek outside of the buffer'));
   })
 })

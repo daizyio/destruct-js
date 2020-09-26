@@ -7,16 +7,20 @@ export default class PosBuffer {
     this.buffer = Buffer.from(array);
   }
 
-  public read(instruction: new (name: string | null, options?: any) => Instruction) {
+  public read(instruction: new (name: string | null, options?: any) => Instruction, options?: TypeOptions) {
+    if (this.offsetBytes > this.buffer.length - 1) {
+      throw new Error('Attempt to read outside of the buffer');
+    }
+
     const state: any = { result: {}, storedVars: {}, mode: this.options.endianness || Mode.BE, offset: { bytes: this.offsetBytes, bits: this.offsetBits}};
-    const dataInstruction = new instruction(null, {});
+    const dataInstruction = new instruction(null, options);
     const value = dataInstruction.execute(this.buffer, state);
-    this.addOffset(dataInstruction.size);
+    this.updateOffset(dataInstruction.size);
     return value;
   }
 
   public skip(bytes: number) {
-    this.addOffset(bytes * 8);
+    this.updateOffset(bytes * 8);
     if (this.offsetBytes > this.buffer.length - 1 || this.offsetBytes < 0) {
       throw new Error('Attempt to skip outside the buffer');
     }
@@ -24,20 +28,38 @@ export default class PosBuffer {
   }
 
   public peek(instruction: new (name: string | null, options?: any) => Instruction, byteOffset: number) {
+    const dataInstruction = new instruction(null, {});
+    if (byteOffset < 0 || (byteOffset + this.addOffset(dataInstruction.size).bytes) > this.buffer.length ) {
+      throw new Error('Attempt to peek outside of the buffer');
+    }
     const state: any = { result: {}, storedVars: {}, mode: this.options.endianness || Mode.BE, offset: { bytes: byteOffset, bits: 0 }};
-    const value = new instruction(null, {}).execute(this.buffer, state);
+    const value = dataInstruction.execute(this.buffer, state);
     return value;
   }
 
-  private addOffset(bitSize: number) {
+  private addOffset(bitSize: number): { bytes: number, bits: number} {
     const currentOffsetInBits = (this.offsetBytes * 8) + this.offsetBits;
     const updatedOffsetInBits = currentOffsetInBits + bitSize;
-    this.offsetBytes = Math.floor(updatedOffsetInBits / 8);
-    this.offsetBits = updatedOffsetInBits % 8;
+
+    return { bytes: Math.floor(updatedOffsetInBits / 8), bits: updatedOffsetInBits % 8 };
+  }
+
+  private updateOffset(bitSize: number): void {
+    const updateOffset = this.addOffset(bitSize);
+    this.offsetBytes = updateOffset.bytes;
+    this.offsetBits = updateOffset.bits;
   }
 
 }
 
+export type Encoding = 'ascii' | 'utf8' | 'utf-8' | 'utf16le' | 'ucs2' | 'ucs-2' | 'base64' | 'binary' | 'hex' | 'latin1';
+
 export interface BufferOptions {
   endianness?: Mode;
+}
+
+export interface TypeOptions {
+  size?: number;
+  encoding?: Encoding;
+  terminator?: string | number;
 }

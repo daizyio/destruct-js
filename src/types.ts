@@ -1,4 +1,5 @@
-import { Mode, Instruction, ReaderState, ParsingError, FieldOptions, Primitive, Encoding } from './payload_spec';
+import { Mode, Instruction, ReaderState, ParsingError, FieldOptions, Primitive } from './payload_spec';
+import { Encoding } from './pos_buffer';
 
 abstract class ThenableInstruction implements Instruction {
   private _then: ((value: Primitive) => Primitive) | undefined;
