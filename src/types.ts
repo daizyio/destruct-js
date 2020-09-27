@@ -1,5 +1,5 @@
 import { Mode, Instruction, ReaderState, ParsingError, FieldOptions, Primitive } from './payload_spec';
-import { Encoding } from './pos_buffer';
+import PosBuffer, { Encoding } from './pos_buffer';
 
 abstract class ThenableInstruction implements Instruction {
   private _then: ((value: Primitive) => Primitive) | undefined;
@@ -10,7 +10,7 @@ abstract class ThenableInstruction implements Instruction {
     this._shouldBe = options?.shouldBe ?? null;
   }
 
-  abstract execute(buffer: Buffer, readerState: ReaderState): number | string | boolean;
+  abstract execute(buffer: PosBuffer, readerState: ReaderState): number | string | boolean;
   abstract size: number;
   
   get name() {
@@ -34,10 +34,10 @@ export abstract class NumericDataType extends ThenableInstruction {
   abstract le: (offset: number) => any;
   abstract bitSize: () => number;
 
-  public execute(buffer: Buffer, readerState: ReaderState): number {
+  public execute(buffer: PosBuffer, readerState: ReaderState): number {
     this.assertAtByteBoundary(readerState);
     const valueFunction = (readerState.mode === Mode.BE) ? this.be : this.le;
-    const boundFunction = valueFunction.bind(buffer);
+    const boundFunction = valueFunction.bind(buffer.buffer);
     const value = boundFunction(readerState.offset.bytes);
     const thennedValue = this.then(value);
     this.check(thennedValue);
@@ -130,13 +130,13 @@ export class Text extends ThenableInstruction {
     this.terminator = this.convertTerminator(options?.terminator);
   }
 
-  public execute(buffer: Buffer, readerState: ReaderState) {
+  public execute(buffer: PosBuffer, readerState: ReaderState) {
     const startingBuffer = buffer.slice(readerState.offset.bytes);
-    let workingBuffer: Buffer = startingBuffer;
+    let workingBuffer: PosBuffer = startingBuffer;
     if (this._size) {
       workingBuffer = startingBuffer.slice(0, this._size);
     } else if (this.terminator != null) {
-      const index = startingBuffer.findIndex(b => b == this.terminator);
+      const index = startingBuffer.buffer.findIndex(b => b == this.terminator);
       if (index > -1) {
         this._size = index + 1;
         workingBuffer = startingBuffer.slice(0, index);
@@ -179,9 +179,9 @@ export abstract class Bits extends ThenableInstruction {
     this._size = options.size;
   }
 
-  execute(buffer: Buffer, readerState: ReaderState): string | number | boolean {
+  execute(buffer: PosBuffer, readerState: ReaderState): string | number | boolean {
     const bytesToRead = Math.ceil((readerState.offset.bits + this.size) / 8);
-    const value = buffer.readUIntBE(readerState.offset.bytes, bytesToRead);
+    const value = buffer.buffer.readUIntBE(readerState.offset.bytes, bytesToRead);
 
     const bitsRead = bytesToRead * 8;
     const bitMask = ((2 ** this.size) - 1);
@@ -204,7 +204,7 @@ export class Bool extends Bits {
     super(name, {...options, size: 1} )
   }
 
-  execute(buffer: Buffer, readerState: ReaderState): string | number | boolean {
+  execute(buffer: PosBuffer, readerState: ReaderState): string | number | boolean {
     const value = super.execute(buffer, readerState);
     const boolValue = value === 1;
     if (this.name) {
@@ -317,7 +317,7 @@ export class Bits16 extends Bits {
 export class Literal implements Instruction {
   constructor(private _name: string, private value: string | number | boolean) {}
 
-  execute(buffer: Buffer, readerState: ReaderState) {
+  execute(buffer: PosBuffer, readerState: ReaderState) {
     readerState.result[this.name] = this.value;
   }
 

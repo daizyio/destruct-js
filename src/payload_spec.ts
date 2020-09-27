@@ -1,4 +1,4 @@
-import { Encoding } from './pos_buffer';
+import PosBuffer, { Encoding } from './pos_buffer';
 import { NumericDataType, Literal } from './types';
 
 type InstructionCtor =  new (name: string | null, options?: any) => Instruction;
@@ -81,7 +81,7 @@ export interface FieldOptions {
 export type ReaderState = { result: any, storedVars: any, offset: { bytes: number, bits: number }, mode: Mode};
 
 export interface Instruction {
-  execute(buffer: Buffer, readerState: ReaderState): any;
+  execute(buffer: PosBuffer, readerState: ReaderState): any;
   readonly size: number;
   readonly name: string | null;
 }
@@ -89,7 +89,7 @@ export interface Instruction {
 class Ignorable implements Instruction {
   constructor(private inst: Instruction) {}
 
-  execute(buffer: Buffer, readerState: ReaderState) {
+  execute(buffer: PosBuffer, readerState: ReaderState) {
     this.inst.execute(buffer, readerState);
     const name = this.inst.name;
     if (name) {
@@ -110,7 +110,7 @@ class Ignorable implements Instruction {
 }
 
 class NullInstruction implements Instruction {
-  public execute(buffer: Buffer, readerState: ReaderState): any {
+  public execute(buffer: PosBuffer, readerState: ReaderState): any {
     return null;
   }
 
@@ -143,7 +143,7 @@ class EndiannessInstruction extends NullInstruction {
 class PadInstruction extends NullInstruction {
   private _size: number = 0;
 
-  public execute(buffer: Buffer, readerState: ReaderState): any {
+  public execute(buffer: PosBuffer, readerState: ReaderState): any {
     const bitsToPad = 8 - readerState.offset.bits;
     this._size = bitsToPad;
     return null;
@@ -157,7 +157,7 @@ class PadInstruction extends NullInstruction {
 class DeriveInstruction implements Instruction {
   constructor(private _name: string, private callback: ValueProvider) {}
 
-  public execute(buffer: Buffer, readerState: ReaderState) {
+  public execute(buffer: PosBuffer, readerState: ReaderState) {
     const combinedVars = { ...readerState.result, ...readerState.storedVars }
     const value = this.callback(combinedVars);
     readerState.result[this._name] = value;
@@ -178,11 +178,11 @@ class IfInstruction extends NullInstruction {
     super();
   }
 
-  public execute(buffer: Buffer, readerState: ReaderState) {
+  public execute(buffer: PosBuffer, readerState: ReaderState) {
     const shouldExec = this.predicate({ ...readerState.result, ...readerState.storedVars });
 
     if (shouldExec) {
-      const subResult = this.otherSpec.exec(buffer, readerState);
+      const subResult = this.otherSpec.exec(buffer.buffer, readerState);
       Object.assign(readerState.result, subResult);
     }
   }
@@ -193,7 +193,7 @@ class LookupInstruction extends NullInstruction {
     super();
   }
 
-  public execute(buffer: Buffer, readerState: ReaderState) {
+  public execute(buffer: PosBuffer, readerState: ReaderState) {
     const value = this.valueProvider({ ...readerState.result, ...readerState.storedVars });
 
     if (value == null) return;
@@ -201,7 +201,7 @@ class LookupInstruction extends NullInstruction {
     const otherSpec = this.valueMap[value.toString()] ?? this.valueMap['default'];
 
     if (otherSpec) {
-      const subResult = otherSpec.exec(buffer, readerState);
+      const subResult = otherSpec.exec(buffer.buffer, readerState);
       Object.assign(readerState.result, subResult);
     }
   }
@@ -221,9 +221,11 @@ class BufferReader {
     this.bitOffset = initialState?.offset?.bits || 0;
   }
   
-  public read(buffer: Buffer): any {
+  public read(originalBuffer: Buffer): any {
     const result: any = {};
     const storedVars: any = {};
+
+    const buffer = new PosBuffer(originalBuffer);
 
     for(const instruction of this.instructions) {
       if (instruction instanceof EndiannessInstruction) {
@@ -231,7 +233,7 @@ class BufferReader {
         continue;
       }
       
-      if (this.byteOffset >= buffer.length && instruction.size > 0) {
+      if (this.byteOffset >= originalBuffer.length && instruction.size > 0) {
         throw new ParsingError('Reached end of buffer');
       }
 

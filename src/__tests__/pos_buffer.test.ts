@@ -336,3 +336,34 @@ describe('Peeking', () => {
     expect(() => buffer.peek(UInt32, 0)).toThrowError(new Error('Attempt to peek outside of the buffer'));
   })
 })
+
+describe('Buffer methods', () => {
+  test('length returns the length of the underlying buffer', () => {
+    const buffer = new PosBuffer([0xFF, 0xFE, 0xFD, 0xFC, 0xFB, 0xFA]);
+    
+    expect(buffer.length).toBe(6);
+  })
+
+  test('slice returns a PosBuffer with a slice of the underlying array', () => {
+    const buffer = new PosBuffer([0xFF, 0xFE, 0xFD, 0xFC, 0xFB, 0xFA]);
+    
+    const newBuffer = buffer.slice(2);
+
+    expect(newBuffer.read(UInt8)).toBe(253);
+    expect(newBuffer.length).toBe(4);
+  })
+
+  test('toString() returns a string view of the buffer', () => {
+    const buffer = new PosBuffer([0x62, 0x6f, 0x62]);
+
+    expect(buffer.toString()).toBe('bob');
+    expect(buffer.toString('utf8', 1)).toBe('ob');
+    expect(buffer.toString('utf8', 0, 2)).toBe('bo');
+  })
+
+  test('buffer property returns the underlying buffer', () => {
+    const posBuffer = new PosBuffer([0x62, 0x6f, 0x62]);
+
+    expect(posBuffer.buffer).toBeInstanceOf(Buffer);
+  })
+})
