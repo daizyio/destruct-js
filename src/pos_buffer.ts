@@ -1,5 +1,4 @@
 import { DataType } from '.';
-import { Instruction, Mode, Primitive, Value, ValueProducer } from './payload_spec';
 
 export default class PosBuffer {
   private _buffer: Buffer;
@@ -15,9 +14,8 @@ export default class PosBuffer {
       throw new Error('Attempt to read outside of the buffer');
     }
 
-    const state: any = { result: {}, storedVars: {}, mode: this.options.endianness || Mode.BE, offset: { bytes: this.offsetBytes, bits: this.offsetBits}};
     const dataInstruction = new instruction(options);
-    const value = dataInstruction.execute(this, state);
+    const value = dataInstruction.execute(this);
     this.updateOffset(dataInstruction.size);
     return value;
   }
@@ -31,12 +29,15 @@ export default class PosBuffer {
   }
 
   public peek(instruction: new (options?: any) => DataType, byteOffset: number, options?: TypeOptions) {
-    const dataInstruction = new instruction({});
+    const dataInstruction = new instruction(options);
     if (byteOffset < 0 || (byteOffset + this.addOffset(dataInstruction.size).bytes) > this._buffer.length ) {
       throw new Error('Attempt to peek outside of the buffer');
     }
-    const state: any = { result: {}, storedVars: {}, mode: this.options.endianness || Mode.BE, offset: { bytes: byteOffset, bits: 0 }};
-    const value = dataInstruction.execute(this, state);
+
+    const originalOffset = this.offset;
+    this.offset = { bytes: byteOffset, bits: 0 };
+    const value = dataInstruction.execute(this);
+    this.offset = originalOffset;
     return value;
   }
 
@@ -55,7 +56,11 @@ export default class PosBuffer {
     return this._buffer.toString(encoding, start, end);
   }
 
-  public setEndianness(endianness: Mode) {
+  get mode() {
+    return this.options.endianness || Mode.BE;
+  }
+
+  set mode(endianness: Mode) {
     this.options.endianness = endianness;
   }
 
@@ -104,4 +109,9 @@ export interface TypeOptions {
   encoding?: Encoding;
   terminator?: string | number;
   dp?: number;
+}
+
+export enum Mode {
+  BE,
+  LE
 }

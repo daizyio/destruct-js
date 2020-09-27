@@ -1,4 +1,5 @@
-import { PayloadSpec, Mode } from '../payload_spec';
+import { PayloadSpec } from '../payload_spec';
+import { Mode } from '../pos_buffer';
 import { UInt32, UInt8, Float, Text, UInt16, Bit, Int8, Bool, Bits4, Bits2, Bits5 } from '../types';
 
 describe('Documentation examples', () => {

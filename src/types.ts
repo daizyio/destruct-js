@@ -1,11 +1,10 @@
-import { Mode, ReaderState, ParsingError, FieldOptions, Primitive, ValueProducer } from './payload_spec';
-import PosBuffer, { Encoding } from './pos_buffer';
+import PosBuffer, { Encoding, Mode, TypeOptions } from './pos_buffer';
 
 export abstract class DataType {
 
-  constructor(protected options?: FieldOptions) {}
+  constructor(protected options?: TypeOptions) {}
 
-  abstract execute(buffer: PosBuffer, readerState: ReaderState): number | string | boolean;
+  abstract execute(buffer: PosBuffer): number | string | boolean;
   abstract size: number;
 }
 
@@ -14,17 +13,17 @@ export abstract class NumericDataType extends DataType {
   abstract le: (offset: number) => any;
   abstract bitSize: () => number;
 
-  public execute(buffer: PosBuffer, readerState: ReaderState): number {
-    this.assertAtByteBoundary(readerState);
-    const valueFunction = (readerState.mode === Mode.BE) ? this.be : this.le;
+  public execute(buffer: PosBuffer): number {
+    this.assertAtByteBoundary(buffer.offset);
+    const valueFunction = (buffer.mode === Mode.BE) ? this.be : this.le;
     const boundFunction = valueFunction.bind(buffer.buffer);
-    const value = boundFunction(readerState.offset.bytes);
+    const value = boundFunction(buffer.offset.bytes);
     return value;
   }
 
-  private assertAtByteBoundary(readerState: ReaderState): void {
-    if (readerState.offset.bits !== 0) {
-      throw new ParsingError(`Buffer position is not at a byte boundary (bit offset ${readerState.offset.bits}). Do you need to use pad()?`)
+  private assertAtByteBoundary(offset: { bytes: number, bits: number}): void {
+    if (offset.bits !== 0) {
+      throw new Error(`Buffer position is not at a byte boundary (bit offset ${offset.bits}). Do you need to use pad()?`)
     }
   }
 
@@ -75,8 +74,8 @@ abstract class FloatingPointDataType extends NumericDataType {
     super(options);
   }
 
-  public execute(buffer: PosBuffer, readerState: ReaderState): number {
-    const value = super.execute(buffer, readerState);
+  public execute(buffer: PosBuffer): number {
+    const value = super.execute(buffer);
     return this.options?.dp ? parseFloat(value.toFixed(this.options?.dp)) : value;
   }
 }
@@ -105,8 +104,8 @@ export class Text extends DataType {
     this.terminator = this.convertTerminator(options?.terminator);
   }
 
-  public execute(posBuffer: PosBuffer, readerState: ReaderState) {
-    const startingBuffer = posBuffer.buffer.slice(readerState.offset.bytes);
+  public execute(posBuffer: PosBuffer) {
+    const startingBuffer = posBuffer.buffer.slice(posBuffer.offset.bytes);
     let workingBuffer: Buffer = startingBuffer;
     if (this._size) {
       workingBuffer = startingBuffer.slice(0, this._size);
@@ -148,13 +147,13 @@ export abstract class Bits extends DataType {
     this._size = options.size;
   }
 
-  execute(buffer: PosBuffer, readerState: ReaderState): string | number | boolean {
-    const bytesToRead = Math.ceil((readerState.offset.bits + this._size) / 8);
-    const value = buffer.buffer.readUIntBE(readerState.offset.bytes, bytesToRead);
+  execute(buffer: PosBuffer): string | number | boolean {
+    const bytesToRead = Math.ceil((buffer.offset.bits + this._size) / 8);
+    const value = buffer.buffer.readUIntBE(buffer.offset.bytes, bytesToRead);
 
     const bitsRead = bytesToRead * 8;
     const bitMask = ((2 ** this._size) - 1);
-    const result = ((value >> (bitsRead - this._size - readerState.offset.bits)) & bitMask);
+    const result = ((value >> (bitsRead - this._size - buffer.offset.bits)) & bitMask);
 
     return result;
   }
@@ -169,8 +168,8 @@ export class Bool extends Bits {
     super({...options, size: 1} )
   }
 
-  execute(buffer: PosBuffer, readerState: ReaderState): string | number | boolean {
-    const value = super.execute(buffer, readerState);
+  execute(buffer: PosBuffer): string | number | boolean {
+    const value = super.execute(buffer);
     return value === 1;
   }
 }

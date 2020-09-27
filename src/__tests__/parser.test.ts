@@ -1,4 +1,5 @@
-import { PayloadSpec, Mode, ParsingError } from '../payload_spec';
+import { PayloadSpec, ParsingError } from '../payload_spec';
+import { Mode } from '../pos_buffer';
 import { UInt8, Int8, UInt16, Float, UInt32, Text, Bit, Bool, Bits3, Bits5, Bits2, Bits8 } from '../types';
 
 describe('Simple fields', () => {

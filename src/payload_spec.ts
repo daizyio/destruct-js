@@ -1,4 +1,4 @@
-import PosBuffer, { Encoding } from './pos_buffer';
+import PosBuffer, { Encoding, Mode } from './pos_buffer';
 import { NumericDataType, DataType } from './types';
 
 type DataTypeCtor = new (options?: FieldOptions) => DataType;
@@ -95,7 +95,6 @@ export abstract class ValueProducer implements Instruction<Primitive> {
   }
 
   abstract execute(buffer: PosBuffer, readerState: ReaderState): Primitive;
-  abstract readonly size: number;
   abstract readonly name: string | null;
 }
 
@@ -128,10 +127,6 @@ export class Value extends ValueProducer {
     }
   }
 
-  get size() {
-    return 0;
-  }
-
   get name() {
     return this._name;
   }
@@ -151,10 +146,6 @@ class DeriveValue extends ValueProducer {
   get name() {
     return this._name;
   }
-
-  get size() {
-    return 0;
-  }
 }
 
 class Literal extends ValueProducer {
@@ -169,10 +160,6 @@ class Literal extends ValueProducer {
     return this.value!;
   }
 
-  get size() {
-    return 0;
-  }
-
   get name() {
     return this._name;
   }
@@ -180,10 +167,6 @@ class Literal extends ValueProducer {
 
 class NullInstruction implements Instruction<void> {
   public execute(buffer: PosBuffer, readerState: ReaderState): void {
-  }
-
-  get size() {
-    return 0;
   }
 
   get name(): string | null {
@@ -200,10 +183,6 @@ class SkipInstruction extends NullInstruction {
   public execute(buffer: PosBuffer, reader: ReaderState): void {
     buffer.skip(this.bytes);
   }
-
-  get size() {
-    return this.bytes * 8;
-  }
 }
 
 class EndiannessInstruction extends NullInstruction {
@@ -212,19 +191,14 @@ class EndiannessInstruction extends NullInstruction {
   }
 
   public execute(buffer: PosBuffer, readerState: ReaderState): void {
-    buffer.setEndianness(this.mode);
+    buffer.mode = this.mode;
   }
 }
 
 class PadInstruction extends NullInstruction {
-  private _size: number = 0;
 
   public execute(buffer: PosBuffer, readerState: ReaderState): void {
     buffer.pad();
-  }
-
-  get size() {
-    return this._size;
   }
 }
 
@@ -260,11 +234,6 @@ class LookupInstruction extends NullInstruction {
       Object.assign(readerState.result, subResult);
     }
   }
-}
-
-export enum Mode {
-  BE,
-  LE
 }
 
 class BufferReader {
