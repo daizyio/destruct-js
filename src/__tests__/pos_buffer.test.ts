@@ -1,6 +1,6 @@
 import { Mode, PayloadSpec } from '../payload_spec';
 import PosBuffer from '../pos_buffer';
-import { UInt8, Int8, Int16, UInt16, Int32, UInt32, Float, Double, Text } from '../types';
+import { UInt8, Int8, Int16, UInt16, Int32, UInt32, Float, Double, Text, Bool, Bit, Bits10, Bits11, Bits12, Bits13, Bits14, Bits15, Bits16, Bits2, Bits3, Bits4, Bits5, Bits6, Bits7, Bits8, Bits9 } from '../types';
 
 describe('Numeric types', () => {
   it('reads a UInt8', () => {
@@ -122,6 +122,105 @@ describe('Text', () => {
   });
 });
 
+
+describe('Bool', () => {
+  it('retrieves a single bit from the field as a boolean', () => {
+    const buffer = new PosBuffer([0x80]);
+
+    expect(buffer.read(Bool)).toBe(true);
+  })
+
+  it('can read multiple bools in a row', () => {
+    const buffer = new PosBuffer([0xA0]);
+
+    expect(buffer.read(Bool)).toBe(true);
+    expect(buffer.read(Bool)).toBe(false);
+    expect(buffer.read(Bool)).toBe(true);
+
+  });
+
+  it('can read bools after reading bytes', () => {
+    const buffer = new PosBuffer([0x01, 0x02, 0xA0]);
+
+    buffer.read(UInt8);
+    buffer.read(UInt8);
+    expect(buffer.read(Bool)).toBe(true);
+    expect(buffer.read(Bool)).toBe(false);
+    expect(buffer.read(Bool)).toBe(true);
+  })
+});
+
+describe('Bit', () => {
+  it('retrieves a single bit from the field as 0 or 1', () => {
+    const buffer = new PosBuffer([0x80]);
+
+    expect(buffer.read(Bit)).toBe(1);
+  })
+
+  it('can read multiple bits in a row', () => {
+    const buffer = new PosBuffer([0xA0]);
+
+    expect(buffer.read(Bit)).toBe(1);
+    expect(buffer.read(Bit)).toBe(0);
+    expect(buffer.read(Bit)).toBe(1);
+
+  });
+
+  it('can read bits after reading bytes', () => {
+    const buffer = new PosBuffer([0x01, 0x02, 0xA0]);
+
+    buffer.read(UInt8);
+    buffer.read(UInt8);
+    expect(buffer.read(Bit)).toBe(1);
+    expect(buffer.read(Bit)).toBe(0);
+    expect(buffer.read(Bit)).toBe(1);
+  })
+});
+
+describe('Bits', () => {
+  it('has aliases for taking 2-16 bits', async () => {
+    const spec = new PayloadSpec()
+      .field('bits2', Bits2)
+      .field('bits3', Bits3)
+      .field('bits4', Bits4)
+      .field('bits5', Bits5)
+      .field('bits6', Bits6)
+      .field('bits7', Bits7)
+      .field('bits8', Bits8)
+      .field('bits9', Bits9)
+      .field('bits10', Bits10)
+      .field('bits11', Bits11)
+      .field('bits12', Bits12)
+      .field('bits13', Bits13)
+      .field('bits14', Bits14)
+      .field('bits15', Bits15)
+      .field('bits16', Bits16)
+      .pad()
+      .field('check', UInt8);
+
+    const buffer = new PosBuffer([0xA5, 0x32, 0x7F, 0xC3, 0x77, 0xA1, 0x3B, 0x55, 0xFF, 0xCA, 0xD1, 0x2F, 0x40, 0xEE, 0xBF, 0x4D, 0x04, 0xFF]);
+
+    expect(buffer.read(Bits2)).toBe(2);
+    expect(buffer.read(Bits3)).toBe(4);
+    expect(buffer.read(Bits4)).toBe(10);
+    expect(buffer.read(Bits5)).toBe(12);
+    expect(buffer.read(Bits6)).toBe(39);
+    expect(buffer.read(Bits7)).toBe(126);
+    expect(buffer.read(Bits8)).toBe(27);
+    expect(buffer.read(Bits9)).toBe(378);
+    expect(buffer.read(Bits10)).toBe(78);
+    expect(buffer.read(Bits11)).toBe(1707);
+    expect(buffer.read(Bits12)).toBe(4089);
+    expect(buffer.read(Bits13)).toBe(2884);
+    expect(buffer.read(Bits14)).toBe(12096);
+    expect(buffer.read(Bits15)).toBe(30559);
+    expect(buffer.read(Bits16)).toBe(42626);
+
+    buffer.pad();
+    expect(buffer.read(UInt8)).toBe(255);
+  });
+})
+
 describe('Chained operations', () => {
   it('can read multiple values in succession', () => {
     const buffer = new PosBuffer([0xFF, 0xFF, 0xAE, 0xC4, 0xAE, 0xC4, 0xAE, 0xC4, 0x45, 0xFA, 0xAE, 0xC4, 0x45, 0xFA, 0x40, 0x49, 0x0F, 0xD0, 0x40, 0x09, 0x21, 0xCA, 0xC0, 0x83, 0x12, 0x6F]);
@@ -134,6 +233,36 @@ describe('Chained operations', () => {
     expect(buffer.read(UInt32)).toBe(2932098554);
     expect(buffer.read(Float)).toBe(3.141590118408203);
     expect(buffer.read(Double)).toBe(3.14150000000000018118839761883E0);
+  })
+})
+
+describe('padding', () => {
+  it('can be used to align to the byte boundary', () => {    
+    const buffer = new PosBuffer([0x80, 0x02]);
+    expect(buffer.read(Bool)).toBe(true);
+    buffer.pad();
+    expect(buffer.read(Int8)).toBe(2);
+  });
+
+  it('throws an error if trying to read Int from a non-padded position', () => {
+    const spec = 
+      new PayloadSpec()
+        .field('enabled', Bool)
+        .field('count', Int8)
+    
+    const buffer = new PosBuffer([0x80, 0x02]);
+
+    buffer.read(Bool);
+    expect(() => buffer.read(Int8)).toThrowError(new Error('Buffer position is not at a byte boundary (bit offset 1). Do you need to use pad()?'))
+  })
+
+  it('does not error if previous bits add up to byte boundary', () => {    
+    const buffer = new PosBuffer([0x80, 0x02]);
+
+    buffer.read(Bool);
+    buffer.read(Bits5);
+    buffer.read(Bits2);
+    expect(() => buffer.read(Int8)).not.toThrowError(new Error('Buffer position is not at a byte boundary (bit offset 0). Do you need to use pad()?'))
   })
 })
 

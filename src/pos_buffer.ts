@@ -37,6 +37,11 @@ export default class PosBuffer {
     return value;
   }
 
+  public pad() {
+    this.offsetBytes += 1;
+    this.offsetBits = 0;
+  }
+
   private addOffset(bitSize: number): { bytes: number, bits: number} {
     const currentOffsetInBits = (this.offsetBytes * 8) + this.offsetBits;
     const updatedOffsetInBits = currentOffsetInBits + bitSize;
@@ -49,7 +54,6 @@ export default class PosBuffer {
     this.offsetBytes = updateOffset.bytes;
     this.offsetBits = updateOffset.bits;
   }
-
 }
 
 export type Encoding = 'ascii' | 'utf8' | 'utf-8' | 'utf16le' | 'ucs2' | 'ucs-2' | 'base64' | 'binary' | 'hex' | 'latin1';
