@@ -52,6 +52,14 @@ describe('Numeric types', () => {
   });
 });
 
+describe('Floating point numbers', () => {
+  it('can specify decimal places', () => {
+    const buffer = new PosBuffer([0x40, 0x49, 0x0F, 0xD0, 0x40, 0x49, 0x0F, 0xD0]);
+    expect(buffer.read(Float, { dp: 3 })).toBe(3.142);
+    expect(buffer.read(Float, { dp: 1 })).toBe(3.1);
+  });
+});
+
 describe('Text', () => {
   it('reads text as ascii', () => {
     const buffer = new PosBuffer([0x62, 0x6f, 0x62]);
@@ -85,17 +93,20 @@ describe('Text', () => {
     expect(buffer.read(Text, { size: 8, encoding: 'hex' })).toBe('3619243312521010');
   })
 
-  it('can specify a terminator', () => {
-    const spec = new PayloadSpec();
-
-    spec.field('name', Text, { terminator: 0x00 })
-        .field('one', Int8);
-    
+  it('can specify a byte terminator', () => {
     const buffer = new PosBuffer([0x62, 0x6f, 0x62, 0x00, 0x32]);
 
     expect(buffer.read(Text, { terminator: 0x00 })).toBe('bob');
     expect(buffer.read(Int8)).toBe(50);
   });
+
+  it('can specify a char terminator', () => {
+    const buffer = new PosBuffer([0x62, 0x6f, 0x62, 0x3B, 0x32]);
+
+    expect(buffer.read(Text, { terminator: ';' })).toBe('bob');
+    expect(buffer.read(Int8)).toBe(50);
+  });
+
 
   it('includes terminator in offset', () => {    
     const buffer = new PosBuffer([0x31, 0x00, 0x32, 0x00, 0x33, 0x00]);
@@ -179,25 +190,6 @@ describe('Bit', () => {
 
 describe('Bits', () => {
   it('has aliases for taking 2-16 bits', async () => {
-    const spec = new PayloadSpec()
-      .field('bits2', Bits2)
-      .field('bits3', Bits3)
-      .field('bits4', Bits4)
-      .field('bits5', Bits5)
-      .field('bits6', Bits6)
-      .field('bits7', Bits7)
-      .field('bits8', Bits8)
-      .field('bits9', Bits9)
-      .field('bits10', Bits10)
-      .field('bits11', Bits11)
-      .field('bits12', Bits12)
-      .field('bits13', Bits13)
-      .field('bits14', Bits14)
-      .field('bits15', Bits15)
-      .field('bits16', Bits16)
-      .pad()
-      .field('check', UInt8);
-
     const buffer = new PosBuffer([0xA5, 0x32, 0x7F, 0xC3, 0x77, 0xA1, 0x3B, 0x55, 0xFF, 0xCA, 0xD1, 0x2F, 0x40, 0xEE, 0xBF, 0x4D, 0x04, 0xFF]);
 
     expect(buffer.read(Bits2)).toBe(2);
@@ -245,11 +237,6 @@ describe('padding', () => {
   });
 
   it('throws an error if trying to read Int from a non-padded position', () => {
-    const spec = 
-      new PayloadSpec()
-        .field('enabled', Bool)
-        .field('count', Int8)
-    
     const buffer = new PosBuffer([0x80, 0x02]);
 
     buffer.read(Bool);

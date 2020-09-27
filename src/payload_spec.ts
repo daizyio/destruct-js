@@ -226,8 +226,6 @@ class BufferReader {
     const storedVars: any = {};
 
     for(const instruction of this.instructions) {
-      console.debug(`Executing instruction ${instruction.constructor.name} at position [${this.byteOffset}, ${this.bitOffset}]`)
-      
       if (instruction instanceof EndiannessInstruction) {
         this._mode = instruction.mode;
         continue;

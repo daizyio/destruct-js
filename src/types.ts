@@ -120,14 +120,14 @@ export class Double extends FloatingPointDataType {
 
 export class Text extends ThenableInstruction {
   private _size: number;
-  private terminator: number;
+  private terminator: number | undefined;
   private encoding: Encoding;
 
   constructor(name: string | null, options?: any) {
     super(name, options);
     this._size = options?.size;
     this.encoding = options?.encoding || 'utf8';
-    this.terminator = options?.terminator;
+    this.terminator = this.convertTerminator(options?.terminator);
   }
 
   public execute(buffer: Buffer, readerState: ReaderState) {
@@ -155,6 +155,18 @@ export class Text extends ThenableInstruction {
 
   get size() {
     return this._size * 8;
+  }
+
+  private convertTerminator(terminator: string | number | undefined): number | undefined {
+    if (typeof terminator === 'number') {
+      return terminator;
+    } else if (typeof terminator === 'string') {
+      if (terminator.length > 1) throw new Error('Terminator must be a single character');
+
+      return terminator.charCodeAt(0);
+    } else {
+      return undefined;
+    }
   }
 }
 

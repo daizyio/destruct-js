@@ -66,4 +66,5 @@ export interface TypeOptions {
   size?: number;
   encoding?: Encoding;
   terminator?: string | number;
+  dp?: number;
 }
