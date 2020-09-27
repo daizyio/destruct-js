@@ -2,9 +2,11 @@ import { Instruction, Mode } from './payload_spec';
 
 export default class PosBuffer {
   private buffer: Buffer;
+  private offsetBytes: number = 0;
+  private offsetBits: number = 0;
 
-  constructor(array: number[], private options: BufferOptions = {}, private offsetBytes: number = 0, private offsetBits: number = 0) {
-    this.buffer = Buffer.from(array);
+  constructor(bytes: Buffer | number[], private options: BufferOptions = {}) {
+    this.buffer = Buffer.from(bytes);
   }
 
   public read(instruction: new (name: string | null, options?: any) => Instruction, options?: TypeOptions) {
