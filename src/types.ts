@@ -1,35 +1,19 @@
-import { Mode, Instruction, ReaderState, ParsingError, FieldOptions, Primitive } from './payload_spec';
+import { Mode, ReaderState, ParsingError, FieldOptions, Primitive, ValueProducer } from './payload_spec';
 import PosBuffer, { Encoding } from './pos_buffer';
 
-abstract class ThenableInstruction implements Instruction {
-  private _then: ((value: Primitive) => Primitive) | undefined;
-  private _shouldBe: string | number | boolean | null;
+export abstract class DataType {
 
-  constructor(private _name: string | null, options?: FieldOptions) {
-    this._then = options?.then;
-    this._shouldBe = options?.shouldBe ?? null;
-  }
+  constructor(protected _name: string | null, protected options?: FieldOptions) {}
 
   abstract execute(buffer: PosBuffer, readerState: ReaderState): number | string | boolean;
   abstract size: number;
-  
+
   get name() {
     return this._name;
   }
-
-  public then(value: any): any {
-    const thennedValue = this._then ? this._then(value) : value;
-    return thennedValue;
-  }
-
-  protected check(value: any): void {
-    if (this._shouldBe != null && value != this._shouldBe) {
-      throw new ParsingError(`Expected ${this.name} to be ${this._shouldBe} but was ${value}`);
-    }
-  }
 }
 
-export abstract class NumericDataType extends ThenableInstruction {
+export abstract class NumericDataType extends DataType {
   abstract be: (offset: number) => any;
   abstract le: (offset: number) => any;
   abstract bitSize: () => number;
@@ -39,12 +23,7 @@ export abstract class NumericDataType extends ThenableInstruction {
     const valueFunction = (readerState.mode === Mode.BE) ? this.be : this.le;
     const boundFunction = valueFunction.bind(buffer.buffer);
     const value = boundFunction(readerState.offset.bytes);
-    const thennedValue = this.then(value);
-    this.check(thennedValue);
-    if (this.name) {
-      readerState.result[this.name] = thennedValue;
-    }
-    return thennedValue;
+    return value;
   }
 
   private assertAtByteBoundary(readerState: ReaderState): void {
@@ -101,7 +80,8 @@ abstract class FloatingPointDataType extends NumericDataType {
     this.dp = options?.dp;
   }
 
-  public then(value: number): number {
+  public execute(buffer: PosBuffer, readerState: ReaderState): number {
+    const value = super.execute(buffer, readerState);
     return this.dp ? parseFloat(value.toFixed(this.dp)) : value;
   }
 }
@@ -118,7 +98,7 @@ export class Double extends FloatingPointDataType {
   public bitSize = () => 64;
 }
 
-export class Text extends ThenableInstruction {
+export class Text extends DataType {
   private _size: number;
   private terminator: number | undefined;
   private encoding: Encoding;
@@ -130,13 +110,13 @@ export class Text extends ThenableInstruction {
     this.terminator = this.convertTerminator(options?.terminator);
   }
 
-  public execute(buffer: PosBuffer, readerState: ReaderState) {
-    const startingBuffer = buffer.slice(readerState.offset.bytes);
-    let workingBuffer: PosBuffer = startingBuffer;
+  public execute(posBuffer: PosBuffer, readerState: ReaderState) {
+    const startingBuffer = posBuffer.buffer.slice(readerState.offset.bytes);
+    let workingBuffer: Buffer = startingBuffer;
     if (this._size) {
       workingBuffer = startingBuffer.slice(0, this._size);
     } else if (this.terminator != null) {
-      const index = startingBuffer.buffer.findIndex(b => b == this.terminator);
+      const index = startingBuffer.findIndex(b => b == this.terminator);
       if (index > -1) {
         this._size = index + 1;
         workingBuffer = startingBuffer.slice(0, index);
@@ -144,13 +124,7 @@ export class Text extends ThenableInstruction {
     } else {
       this._size = workingBuffer.length;
     }
-    const value = this.then(workingBuffer.toString(this.encoding));
-    this.check(value);
-    if (this.name) {
-      readerState.result[this.name] = value;
-    }
-
-    return value;
+    return workingBuffer.toString(this.encoding);
   }
 
   get size() {
@@ -170,7 +144,7 @@ export class Text extends ThenableInstruction {
   }
 }
 
-export abstract class Bits extends ThenableInstruction {
+export abstract class Bits extends DataType {
 
   private _size: number;
 
@@ -180,18 +154,14 @@ export abstract class Bits extends ThenableInstruction {
   }
 
   execute(buffer: PosBuffer, readerState: ReaderState): string | number | boolean {
-    const bytesToRead = Math.ceil((readerState.offset.bits + this.size) / 8);
+    const bytesToRead = Math.ceil((readerState.offset.bits + this._size) / 8);
     const value = buffer.buffer.readUIntBE(readerState.offset.bytes, bytesToRead);
 
     const bitsRead = bytesToRead * 8;
-    const bitMask = ((2 ** this.size) - 1);
-    const result = ((value >> (bitsRead - this.size - readerState.offset.bits)) & bitMask);
-    const thennedValue = this.then(result);
-    this.check(thennedValue);
-    if (this.name) {
-      readerState.result[this.name] = thennedValue;
-    }
-    return thennedValue;
+    const bitMask = ((2 ** this._size) - 1);
+    const result = ((value >> (bitsRead - this._size - readerState.offset.bits)) & bitMask);
+
+    return result;
   }
 
   get size() {
@@ -206,11 +176,7 @@ export class Bool extends Bits {
 
   execute(buffer: PosBuffer, readerState: ReaderState): string | number | boolean {
     const value = super.execute(buffer, readerState);
-    const boolValue = value === 1;
-    if (this.name) {
-      readerState.result[this.name] = boolValue;
-    }
-    return boolValue;
+    return value === 1;
   }
 
   get size() {
@@ -311,21 +277,5 @@ export class Bits15 extends Bits {
 export class Bits16 extends Bits {
   constructor(name: string | null, options?: any) {
     super(name, {...options, size: 16} )
-  }
-}
-
-export class Literal implements Instruction {
-  constructor(private _name: string, private value: string | number | boolean) {}
-
-  execute(buffer: PosBuffer, readerState: ReaderState) {
-    readerState.result[this.name] = this.value;
-  }
-
-  get size() {
-    return 0;
-  }
-
-  get name() {
-    return this._name;
   }
 }

@@ -1,4 +1,5 @@
-import { Instruction, Mode } from './payload_spec';
+import { DataType } from '.';
+import { Instruction, Mode, Primitive, Value, ValueProducer } from './payload_spec';
 
 export default class PosBuffer {
   private _buffer: Buffer;
@@ -9,7 +10,7 @@ export default class PosBuffer {
     this._buffer = Buffer.from(bytes);
   }
 
-  public read(instruction: new (name: string | null, options?: any) => Instruction, options?: TypeOptions) {
+  public read(instruction: new (name: string | null, options?: any) => DataType, options?: TypeOptions) {
     if (this.offsetBytes > this._buffer.length - 1) {
       throw new Error('Attempt to read outside of the buffer');
     }
@@ -29,7 +30,7 @@ export default class PosBuffer {
     return this;
   }
 
-  public peek(instruction: new (name: string | null, options?: any) => Instruction, byteOffset: number) {
+  public peek(instruction: new (name: string | null, options?: any) => DataType, byteOffset: number) {
     const dataInstruction = new instruction(null, {});
     if (byteOffset < 0 || (byteOffset + this.addOffset(dataInstruction.size).bytes) > this._buffer.length ) {
       throw new Error('Attempt to peek outside of the buffer');
@@ -40,8 +41,10 @@ export default class PosBuffer {
   }
 
   public pad() {
-    this.offsetBytes += 1;
-    this.offsetBits = 0;
+    if (this.offsetBits != 0) {
+      this.offsetBytes += 1;
+      this.offsetBits = 0;
+    }
   }
 
   public slice(start: number, end?: number) {
@@ -52,12 +55,28 @@ export default class PosBuffer {
     return this._buffer.toString(encoding, start, end);
   }
 
+  public setEndianness(endianness: Mode) {
+    this.options.endianness = endianness;
+  }
+
   get length() {
     return this._buffer.length;
   }
 
   get buffer() {
     return this._buffer;
+  }
+
+  get offset() {
+    return {
+      bytes: this.offsetBytes,
+      bits: this.offsetBits
+    }
+  }
+
+  set offset(offset: { bytes: number, bits: number}) {
+    this.offsetBytes = offset.bytes;
+    this.offsetBits = offset.bits;
   }
 
   private addOffset(bitSize: number): { bytes: number, bits: number} {

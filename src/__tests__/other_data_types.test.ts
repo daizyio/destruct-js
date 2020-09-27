@@ -102,7 +102,7 @@ describe('Text', () => {
         .field('name', Text)
         .field('error', Int8);
     
-    expect(() => spec.exec(Buffer.from([0x32, 0x62, 0x6f, 0x62, 0x62, 0x6f, 0x62]))).toThrow(new ParsingError('Reached end of buffer'));
+    expect(() => spec.exec(Buffer.from([0x32, 0x62, 0x6f, 0x62, 0x62, 0x6f, 0x62]))).toThrow(new Error('Attempt to read outside of the buffer'));
   });
 
   it('supports then function to do conversions', () => {
