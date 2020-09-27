@@ -3,14 +3,10 @@ import PosBuffer, { Encoding } from './pos_buffer';
 
 export abstract class DataType {
 
-  constructor(protected _name: string | null, protected options?: FieldOptions) {}
+  constructor(protected options?: FieldOptions) {}
 
   abstract execute(buffer: PosBuffer, readerState: ReaderState): number | string | boolean;
   abstract size: number;
-
-  get name() {
-    return this._name;
-  }
 }
 
 export abstract class NumericDataType extends DataType {
@@ -74,15 +70,14 @@ export class Int32 extends NumericDataType {
 }
 
 abstract class FloatingPointDataType extends NumericDataType {
-  private dp: number | null;
-  constructor(name: string | null, options?: any) {
-    super(name, options);
-    this.dp = options?.dp;
+
+  constructor(options?: any) {
+    super(options);
   }
 
   public execute(buffer: PosBuffer, readerState: ReaderState): number {
     const value = super.execute(buffer, readerState);
-    return this.dp ? parseFloat(value.toFixed(this.dp)) : value;
+    return this.options?.dp ? parseFloat(value.toFixed(this.options?.dp)) : value;
   }
 }
 
@@ -103,8 +98,8 @@ export class Text extends DataType {
   private terminator: number | undefined;
   private encoding: Encoding;
 
-  constructor(name: string | null, options?: any) {
-    super(name, options);
+  constructor(options?: any) {
+    super(options);
     this._size = options?.size;
     this.encoding = options?.encoding || 'utf8';
     this.terminator = this.convertTerminator(options?.terminator);
@@ -148,8 +143,8 @@ export abstract class Bits extends DataType {
 
   private _size: number;
 
-  constructor(name: string | null, options?: any) {
-    super(name, options);
+  constructor(options?: any) {
+    super(options);
     this._size = options.size;
   }
 
@@ -170,112 +165,108 @@ export abstract class Bits extends DataType {
 }
 
 export class Bool extends Bits {
-  constructor(name: string | null, options?: any) {
-    super(name, {...options, size: 1} )
+  constructor(options?: any) {
+    super({...options, size: 1} )
   }
 
   execute(buffer: PosBuffer, readerState: ReaderState): string | number | boolean {
     const value = super.execute(buffer, readerState);
     return value === 1;
   }
-
-  get size() {
-    return 1;
-  }
 }
 
 export class Bit extends Bits {
-  constructor(name: string | null, options?: any) {
-    super(name, {...options, size: 1} )
+  constructor(options?: any) {
+    super({...options, size: 1} )
   }
 }
 
 export class Bits2 extends Bits {
-  constructor(name: string | null, options?: any) {
-    super(name, {...options, size: 2} )
+  constructor(options?: any) {
+    super({...options, size: 2} )
   }
 }
 
 export class Bits3 extends Bits {
-  constructor(name: string | null, options?: any) {
-    super(name, {...options, size: 3} )
+  constructor(options?: any) {
+    super({...options, size: 3} )
   }
 }
 
 export class Bits4 extends Bits {
-  constructor(name: string | null, options?: any) {
-    super(name, {...options, size: 4} )
+  constructor(options?: any) {
+    super({...options, size: 4} )
   }
 }
 
 export class Bits5 extends Bits {
-  constructor(name: string | null, options?: any) {
-    super(name, {...options, size: 5} )
+  constructor(options?: any) {
+    super({...options, size: 5} )
   }
 }
 
 export class Bits6 extends Bits {
-  constructor(name: string | null, options?: any) {
-    super(name, {...options, size: 6} )
+  constructor(options?: any) {
+    super({...options, size: 6} )
   }
 }
 
 export class Bits7 extends Bits {
-  constructor(name: string | null, options?: any) {
-    super(name, {...options, size: 7} )
+  constructor(options?: any) {
+    super({...options, size: 7} )
   }
 }
 
 export class Bits8 extends Bits {
-  constructor(name: string | null, options?: any) {
-    super(name, {...options, size: 8} )
+  constructor(options?: any) {
+    super({...options, size: 8} )
   }
 }
 
 export class Bits9 extends Bits {
-  constructor(name: string | null, options?: any) {
-    super(name, {...options, size: 9} )
+  constructor(options?: any) {
+    super({...options, size: 9} )
   }
 }
 
 export class Bits10 extends Bits {
-  constructor(name: string | null, options?: any) {
-    super(name, {...options, size: 10} )
+  constructor(options?: any) {
+    super({...options, size: 10} )
   }
 }
 
 export class Bits11 extends Bits {
-  constructor(name: string | null, options?: any) {
-    super(name, {...options, size: 11} )
+  constructor(options?: any) {
+    super({...options, size: 11} )
   }
 }
 
 export class Bits12 extends Bits {
-  constructor(name: string | null, options?: any) {
-    super(name, {...options, size: 12} )
+  constructor(options?: any) {
+    super({...options, size: 12} )
   }
 }
 
 export class Bits13 extends Bits {
-  constructor(name: string | null, options?: any) {
-    super(name, {...options, size: 13} )
+  constructor(options?: any) {
+    super({...options, size: 13} )
   }
 }
 
 export class Bits14 extends Bits {
-  constructor(name: string | null, options?: any) {
-    super(name, {...options, size: 14} )
+  constructor(options?: any) {
+    super({...options, size: 14} )
   }
 }
 
 export class Bits15 extends Bits {
-  constructor(name: string | null, options?: any) {
-    super(name, {...options, size: 15} )
+  constructor(options?: any) {
+    super({...options, size: 15} )
   }
 }
 
 export class Bits16 extends Bits {
-  constructor(name: string | null, options?: any) {
-    super(name, {...options, size: 16} )
+  constructor(options?: any) {
+    super({...options, size: 16} )
   }
 }

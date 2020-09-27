@@ -1,8 +1,8 @@
 import PosBuffer, { Encoding } from './pos_buffer';
 import { NumericDataType, DataType } from './types';
 
-type DataTypeCtor =  new (name: string | null, options?: any) => DataType;
-type NumericTypeCtor = (new (name: string | null) => NumericDataType);
+type DataTypeCtor = new (options?: FieldOptions) => DataType;
+type NumericTypeCtor = (new (options?: FieldOptions) => NumericDataType);
 type Predicate = (r: any) => boolean;
 type ValueProvider = (r: any) => Primitive;
 export type Primitive = number | string | boolean;
@@ -39,7 +39,7 @@ export class PayloadSpec {
   }
 
   public skip(sizable: number | NumericTypeCtor): PayloadSpec {
-    const skipBytes: number = (typeof sizable === 'number') ? sizable : Math.floor(new sizable(null).bitSize() / 8);
+    const skipBytes: number = (typeof sizable === 'number') ? sizable : Math.floor(new sizable().bitSize() / 8);
     this.instructions.push(new SkipInstruction(skipBytes))
     return this;
   }
@@ -280,7 +280,7 @@ class BufferReader {
 
     const buffer = new PosBuffer(originalBuffer, { endianness: this._mode });
     buffer.offset = this.offset;
-    
+
     for(const instruction of this.instructions) {
       const readerState = { result, storedVars, mode: this._mode, offset: buffer.offset }
       if (instruction instanceof ValueProducer) {

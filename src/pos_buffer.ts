@@ -10,13 +10,13 @@ export default class PosBuffer {
     this._buffer = Buffer.from(bytes);
   }
 
-  public read(instruction: new (name: string | null, options?: any) => DataType, options?: TypeOptions) {
+  public read(instruction: new (options?: any) => DataType, options?: TypeOptions) {
     if (this.offsetBytes > this._buffer.length - 1) {
       throw new Error('Attempt to read outside of the buffer');
     }
 
     const state: any = { result: {}, storedVars: {}, mode: this.options.endianness || Mode.BE, offset: { bytes: this.offsetBytes, bits: this.offsetBits}};
-    const dataInstruction = new instruction(null, options);
+    const dataInstruction = new instruction(options);
     const value = dataInstruction.execute(this, state);
     this.updateOffset(dataInstruction.size);
     return value;
@@ -30,8 +30,8 @@ export default class PosBuffer {
     return this;
   }
 
-  public peek(instruction: new (name: string | null, options?: any) => DataType, byteOffset: number) {
-    const dataInstruction = new instruction(null, {});
+  public peek(instruction: new (options?: any) => DataType, byteOffset: number, options?: TypeOptions) {
+    const dataInstruction = new instruction({});
     if (byteOffset < 0 || (byteOffset + this.addOffset(dataInstruction.size).bytes) > this._buffer.length ) {
       throw new Error('Attempt to peek outside of the buffer');
     }
