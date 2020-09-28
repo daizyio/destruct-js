@@ -367,3 +367,46 @@ describe('Buffer methods', () => {
     expect(posBuffer.buffer).toBeInstanceOf(Buffer);
   })
 })
+
+describe('Read many', () => {
+  it('can read multiple values in one go', () => {
+    const buffer = new PosBuffer([0xFF, 0x40, 0x49, 0x0F, 0xD0, 0xFA, 0x62, 0x6f, 0x62, 0x00, 0x62, 0x61, 0x62, 0xAA, 0x05, 0x01, 0x02, 0x03, 0x04, 0x05]);
+
+    const [first, second, third] = buffer.readMany([
+      { type: UInt8 },
+      { type: Float, options: { dp: 2 }},
+      { type: Int8 }
+    ])
+
+    expect(first).toBe(255);
+    expect(second).toBe(3.14);
+    expect(third).toBe(-6);
+
+    const [name1, name2] = buffer.readMany([
+      { type: Text, options: { terminator: 0x00 }},
+      { type: Text, options: { size: 3 }},
+    ]);
+
+    expect(name1).toBe('bob');
+    expect(name2).toBe('bab');
+
+    const [bits74, bit3, bit2, bits10] = buffer.readMany([
+      { type: Bits4 },
+      { type: Bit },
+      { type: Bit },
+      { type: Bits2 },
+    ])
+
+    expect(bits74).toBe(10);
+    expect(bit3).toBe(1);
+    expect(bit2).toBe(0);
+    expect(bits10).toBe(2);
+
+    const loopCount = buffer.read(UInt8);
+
+    for (let i = 0; i < loopCount; i++) {
+      const value = buffer.read(UInt8);
+      expect(value).toBe(i + 1);
+    }
+  })
+})

@@ -1,8 +1,5 @@
-import PosBuffer, { Encoding, Mode } from './pos_buffer';
-import { NumericDataType, DataType } from './types';
+import PosBuffer, { DataTypeCtor, Encoding, Mode, NumericTypeCtor } from './pos_buffer';
 
-type DataTypeCtor = new (options?: FieldOptions) => DataType;
-type NumericTypeCtor = (new (options?: FieldOptions) => NumericDataType);
 type Predicate = (r: any) => boolean;
 type ValueProvider = (r: any) => Primitive;
 export type Primitive = number | string | boolean;
@@ -34,7 +31,7 @@ export class PayloadSpec {
   }
 
   public derive(name: string, callback: (r: any) => number | string): PayloadSpec {
-    this.instructions.push(new DeriveValue(name, callback));
+    this.instructions.push(new Calculation(name, callback));
     return this;
   }
 
@@ -132,7 +129,7 @@ export class Value extends ValueProducer {
   }
 }
 
-class DeriveValue extends ValueProducer {
+class Calculation extends ValueProducer {
 
   constructor(_name: string, private callback: ValueProvider) {
     super(_name, { store: false });

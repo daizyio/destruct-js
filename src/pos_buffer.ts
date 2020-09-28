@@ -1,4 +1,7 @@
-import { DataType } from '.';
+import { DataType, NumericDataType } from '.';
+
+export type DataTypeCtor = new (options?: TypeOptions) => DataType;
+export type NumericTypeCtor = new (options?: TypeOptions) => NumericDataType;
 
 export default class PosBuffer {
   private _buffer: Buffer;
@@ -7,17 +10,25 @@ export default class PosBuffer {
 
   constructor(bytes: Buffer | number[], private options: BufferOptions = {}) {
     this._buffer = Buffer.from(bytes);
+    this.offsetBytes = options?.offset?.bytes || 0;
+    this.offsetBits = options?.offset?.bits || 0;
   }
 
-  public read(instruction: new (options?: any) => DataType, options?: TypeOptions) {
+  public read(dataType: DataTypeCtor, options?: TypeOptions) {
     if (this.offsetBytes > this._buffer.length - 1) {
       throw new Error('Attempt to read outside of the buffer');
     }
 
-    const dataInstruction = new instruction(options);
+    const dataInstruction = new dataType(options);
     const value = dataInstruction.execute(this);
     this.updateOffset(dataInstruction.size);
     return value;
+  }
+
+  public readMany(dataTypes: { type: DataTypeCtor, options?: TypeOptions }[]) {
+    return dataTypes.map((dt) => {
+      return this.read(dt.type, dt.options);
+    })
   }
 
   public skip(bytes: number) {
@@ -102,6 +113,7 @@ export type Encoding = 'ascii' | 'utf8' | 'utf-8' | 'utf16le' | 'ucs2' | 'ucs-2'
 
 export interface BufferOptions {
   endianness?: Mode;
+  offset?: { bytes: number, bits: number };
 }
 
 export interface TypeOptions {
