@@ -107,15 +107,9 @@ export class Value extends ValueProducer {
 
   execute(buffer: PosBuffer, readerState: ReaderState): Primitive {
     const value = buffer.read(this.Type, this.options);
-    const thennedValue = (this._then) ? this._then(value) : value;
-    this.check(thennedValue);
+    this.check(value);
     
-    return thennedValue;
-  }
-
-  public then(value: any): any {
-    const thennedValue = this._then ? this._then(value) : value;
-    return thennedValue;
+    return value;
   }
 
   public check(value: any): void {

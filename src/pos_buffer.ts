@@ -1,4 +1,5 @@
 import { DataType, NumericDataType } from '.';
+import { Primitive } from './payload_spec';
 
 export type DataTypeCtor = new (options?: TypeOptions) => DataType;
 export type NumericTypeCtor = new (options?: TypeOptions) => NumericDataType;
@@ -14,24 +15,26 @@ export default class PosBuffer {
     this.offsetBits = options?.offset?.bits || 0;
   }
 
-  public read(dataType: DataTypeCtor, options?: TypeOptions) {
+  public read(dataType: DataTypeCtor, options?: TypeOptions): string | number | boolean {
     if (this.offsetBytes > this._buffer.length - 1) {
       throw new Error('Attempt to read outside of the buffer');
     }
 
     const dataInstruction = new dataType(options);
     const value = dataInstruction.execute(this);
+
+    const thennedValue = options?.then ? options.then(value) : value;
     this.updateOffset(dataInstruction.size);
-    return value;
+    return thennedValue;
   }
 
-  public readMany(dataTypes: { type: DataTypeCtor, options?: TypeOptions }[]) {
+  public readMany(dataTypes: { type: DataTypeCtor, options?: TypeOptions }[]): (string | number | boolean)[] {
     return dataTypes.map((dt) => {
       return this.read(dt.type, dt.options);
     })
   }
 
-  public skip(bytes: number) {
+  public skip(bytes: number): PosBuffer {
     this.updateOffset(bytes * 8);
     if (this.offsetBytes > this._buffer.length - 1 || this.offsetBytes < 0) {
       throw new Error('Attempt to skip outside the buffer');
@@ -39,7 +42,7 @@ export default class PosBuffer {
     return this;
   }
 
-  public peek(instruction: new (options?: any) => DataType, byteOffset: number, options?: TypeOptions) {
+  public peek(instruction: new (options?: any) => DataType, byteOffset: number, options?: TypeOptions): string | number | boolean {
     const dataInstruction = new instruction(options);
     if (byteOffset < 0 || (byteOffset + this.addOffset(dataInstruction.size).bytes) > this._buffer.length ) {
       throw new Error('Attempt to peek outside of the buffer');
@@ -52,22 +55,24 @@ export default class PosBuffer {
     return value;
   }
 
-  public pad() {
+  public pad(): PosBuffer {
     if (this.offsetBits != 0) {
       this.offsetBytes += 1;
       this.offsetBits = 0;
     }
+
+    return this;
   }
 
-  public slice(start: number, end?: number) {
+  public slice(start: number, end?: number): PosBuffer {
     return new PosBuffer(this._buffer.slice(start, end));
   }
 
-  public toString(encoding?: Encoding, start?: number, end?: number) {
+  public toString(encoding?: Encoding, start?: number, end?: number): string {
     return this._buffer.toString(encoding, start, end);
   }
 
-  get mode() {
+  get mode(): Mode {
     return this.options.endianness || Mode.BE;
   }
 
@@ -75,15 +80,15 @@ export default class PosBuffer {
     this.options.endianness = endianness;
   }
 
-  get length() {
+  get length(): number {
     return this._buffer.length;
   }
 
-  get buffer() {
+  get buffer(): Buffer {
     return this._buffer;
   }
 
-  get offset() {
+  get offset(): { bytes: number, bits: number } {
     return {
       bytes: this.offsetBytes,
       bits: this.offsetBits
@@ -121,6 +126,7 @@ export interface TypeOptions {
   encoding?: Encoding;
   terminator?: string | number;
   dp?: number;
+  then?: (v: any) => Primitive;
 }
 
 export enum Mode {

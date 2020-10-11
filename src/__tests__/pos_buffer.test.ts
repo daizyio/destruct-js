@@ -234,6 +234,14 @@ describe('Chained operations', () => {
   })
 })
 
+describe('then', () => {
+  it('executes the function once the value has been read', () => {
+    const buffer = new PosBuffer([0x0A]);
+
+    expect(buffer.read(Int8, { then: (v) => v * 10})).toBe(100);
+  })
+})
+
 describe('padding', () => {
   it('can be used to align to the byte boundary', () => {    
     const buffer = new PosBuffer([0x80, 0x02]);
