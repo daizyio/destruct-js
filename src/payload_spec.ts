@@ -3,7 +3,6 @@ import PosBuffer, { DataTypeCtor, Encoding, Mode, NumericTypeCtor } from './pos_
 type Predicate = (r: any) => boolean;
 type ValueProvider = (r: any) => Primitive;
 export type Primitive = number | string | boolean;
-export type InstructionSpec = [string, DataTypeCtor | Primitive, FieldOptions];
 
 export class PayloadSpec {
 
