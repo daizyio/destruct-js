@@ -23,7 +23,12 @@ export class PosBuffer {
     const dataInstruction = new dataType(options);
     const value = dataInstruction.execute(this);
 
-    const thennedValue = options?.then ? options.then(value) : value;
+    let thennedValue = options?.then ? options.then(value) : value;
+
+    if (typeof thennedValue == 'number' && options?.dp && !Number.isInteger(thennedValue)) {
+      thennedValue = parseFloat(thennedValue.toFixed(options.dp));
+    }
+
     this.updateOffset(dataInstruction.size);
     return thennedValue;
   }

@@ -68,25 +68,13 @@ export class Int32 extends NumericDataType {
   public bitSize = () => 32;
 }
 
-abstract class FloatingPointDataType extends NumericDataType {
-
-  constructor(options?: any) {
-    super(options);
-  }
-
-  public execute(buffer: PosBuffer): number {
-    const value = super.execute(buffer);
-    return this.options?.dp ? parseFloat(value.toFixed(this.options?.dp)) : value;
-  }
-}
-
-export class Float extends FloatingPointDataType {
+export class Float extends NumericDataType {
   public be = Buffer.prototype.readFloatBE;
   public le = Buffer.prototype.readFloatLE;
   public bitSize = () => 32;
 }
 
-export class Double extends FloatingPointDataType {
+export class Double extends NumericDataType {
   public be = Buffer.prototype.readDoubleBE;
   public le = Buffer.prototype.readDoubleLE;
   public bitSize = () => 64;

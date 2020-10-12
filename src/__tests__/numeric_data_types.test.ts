@@ -46,6 +46,26 @@ describe('UInt8', () => {
 
     expect(result.count).toBe(26);
   })
+
+  it('observes decimal place option after a then operation', () => {
+    const spec = new PayloadSpec();
+
+    spec.field('count', UInt8, { then: (v: number) => v/3, dp: 2 });
+
+    const result: any = spec.exec(Buffer.from([0x10]));
+
+    expect(result.count).toBe(5.33);
+  })
+
+  it('keeps integer as integer even if dp specified', () => {
+    const spec = new PayloadSpec();
+
+    spec.field('count', UInt8, { then: (v: number) => v/2, dp: 2 });
+
+    const result: any = spec.exec(Buffer.from([0x10]));
+
+    expect(result.count).toBe(8);
+  })
 })
 
 describe('Int8', () => {
