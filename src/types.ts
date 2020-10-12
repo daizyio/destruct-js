@@ -1,4 +1,4 @@
-import PosBuffer, { Encoding, Mode, TypeOptions } from './pos_buffer';
+import { PosBuffer, Encoding, Mode, TypeOptions } from './pos_buffer';
 
 export abstract class DataType {
 

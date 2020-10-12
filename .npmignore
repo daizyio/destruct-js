@@ -1,0 +1,5 @@
+src
+ideas.txt
+.github
+*.code-workspace
+jest.config.js

@@ -1,4 +1,4 @@
-import PosBuffer, { Mode } from '../pos_buffer';
+import { PosBuffer, Mode } from '../pos_buffer';
 import { UInt8, Int8, Int16, UInt16, Int32, UInt32, Float, Double, Text, Bool, Bit, Bits10, Bits11, Bits12, Bits13, Bits14, Bits15, Bits16, Bits2, Bits3, Bits4, Bits5, Bits6, Bits7, Bits8, Bits9 } from '../types';
 
 describe('Constructing a PosBuffer', () => {

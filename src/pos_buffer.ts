@@ -4,7 +4,7 @@ import { Primitive } from './payload_spec';
 export type DataTypeCtor = new (options?: TypeOptions) => DataType;
 export type NumericTypeCtor = new (options?: TypeOptions) => NumericDataType;
 
-export default class PosBuffer {
+export class PosBuffer {
   private _buffer: Buffer;
   private offsetBytes: number = 0;
   private offsetBits: number = 0;

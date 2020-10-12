@@ -1,4 +1,4 @@
-import PosBuffer, { DataTypeCtor, Encoding, Mode, NumericTypeCtor } from './pos_buffer';
+import { PosBuffer, DataTypeCtor, Encoding, Mode, NumericTypeCtor } from './pos_buffer';
 
 type Predicate = (r: any) => boolean;
 type ValueProvider = (r: any) => Primitive;
