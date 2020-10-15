@@ -122,7 +122,7 @@ export class IfInstruction extends NullInstruction {
     const shouldExec = this.predicate({ ...readerState.result, ...readerState.storedVars });
 
     if (shouldExec) {
-      const subResult = this.otherSpec.exec(buffer, { ...readerState, offset: buffer.offset });
+      const subResult = this.otherSpec.exec(buffer);
       Object.assign(readerState.result, subResult);
     }
   }
@@ -141,7 +141,7 @@ export class LookupInstruction extends NullInstruction {
     const otherSpec = this.valueMap[value.toString()] ?? this.valueMap['default'];
 
     if (otherSpec) {
-      const subResult = otherSpec.exec(buffer, readerState);
+      const subResult = otherSpec.exec(buffer);
       Object.assign(readerState.result, subResult);
     }
   }

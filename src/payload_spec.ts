@@ -58,7 +58,7 @@ export class PayloadSpec {
     return this;
   }
 
-  public exec(data: Buffer | PosBuffer, initialState?: ReaderState): any {
+  public exec(data: Buffer | PosBuffer): any {
     const posBuffer = data instanceof PosBuffer ? data : new PosBuffer(data, { endianness: this.mode });
 
     const reader = new BufferReader(posBuffer, this.mode, this.instructions);
