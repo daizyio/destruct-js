@@ -76,9 +76,8 @@ export class Literal extends ValueProducer {
   }
 }
 
-export class NullInstruction implements Instruction<void> {
-  public execute(buffer: PosBuffer, readerState: ReaderState): void {
-  }
+abstract class NullInstruction implements Instruction<void> {
+  abstract execute(buffer: PosBuffer, readerState: ReaderState): void
 
   get name(): string | null {
     return null;

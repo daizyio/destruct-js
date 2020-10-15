@@ -78,7 +78,7 @@ export interface FieldOptions {
   store?: boolean;
 }
 
-export type ReaderState = { result: any, storedVars: any, offset: { bytes: number, bits: number }, mode: Mode};
+export type ReaderState = { result: any, storedVars: any};
 
 class BufferReader {
   constructor(private posBuffer: PosBuffer, private _mode: Mode = Mode.BE, private instructions: Instruction<any>[]) {
