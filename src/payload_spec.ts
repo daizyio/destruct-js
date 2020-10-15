@@ -1,6 +1,19 @@
 import { Instruction, Primitive, Value, Literal, Calculation, SkipInstruction, IfInstruction, LookupInstruction, PadInstruction, EndiannessInstruction, ValueProducer, Predicate, ValueProvider, LoopInstruction } from './instructions';
 import { PosBuffer, DataTypeCtor, Encoding, Mode, NumericTypeCtor } from './pos_buffer';
 
+export interface FieldOptions {
+  terminator?: string | number;
+  dp?: number;
+  then?: (v: any) => Primitive;
+  shouldBe?: Primitive;
+  size?: number;
+  encoding?: Encoding; 
+  value?: Primitive;
+  store?: boolean;
+}
+
+export type ReaderState = { result: any, storedVars: any };
+
 export class PayloadSpec {
 
   private instructions: Instruction<any>[] = [];
@@ -66,32 +79,18 @@ export class PayloadSpec {
   public exec(data: Buffer | PosBuffer, initialState?: ReaderState): any {
     const posBuffer = data instanceof PosBuffer ? data : new PosBuffer(data, { endianness: this.mode });
 
-    const reader = new BufferReader(posBuffer, this.mode, this.instructions);
+    const reader = new BufferReader(posBuffer, this.instructions);
   
     return reader.read(initialState);
   }
 }
 
-export interface FieldOptions {
-  terminator?: string | number;
-  dp?: number;
-  then?: (v: any) => Primitive;
-  shouldBe?: Primitive;
-  size?: number;
-  encoding?: Encoding; 
-  value?: Primitive;
-  store?: boolean;
-}
-
-export type ReaderState = { result: any, storedVars: any };
-
 class BufferReader {
-  constructor(private posBuffer: PosBuffer, private _mode: Mode = Mode.BE, private instructions: Instruction<any>[]) {
+  constructor(private posBuffer: PosBuffer, private instructions: Instruction<any>[]) {
   }
   
   public read(state: ReaderState = { result: {}, storedVars: {} }): any {
     for(const instruction of this.instructions) {
-      // const readerState = { result, storedVars, mode: this._mode, offset: this.posBuffer.offset }
       if (instruction instanceof ValueProducer) {
         const value = instruction.execute(this.posBuffer, state);
 

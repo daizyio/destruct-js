@@ -7,20 +7,19 @@ export type Primitive = number | string | boolean;
 export interface Instruction<T> {
   execute(buffer: PosBuffer, readerState: ReaderState): T;
 }
-
+// ======
 export abstract class ValueProducer implements Instruction<Primitive | Array<any>> {
   constructor(protected _name: string, public options: FieldOptions | undefined) {
     this.options = options;
   }
 
   abstract execute(buffer: PosBuffer, readerState: ReaderState): Primitive | Array<any>;
-  // abstract readonly name: string | null;
 
   get name() {
     return this._name;
   }
 }
-
+// ======
 export class Value extends ValueProducer {
   private _shouldBe: string | number | boolean | null;
 
@@ -42,7 +41,7 @@ export class Value extends ValueProducer {
     }
   }
 }
-
+// ======
 export class Calculation extends ValueProducer {
 
   constructor(_name: string, private callback: ValueProvider) {
@@ -54,7 +53,7 @@ export class Calculation extends ValueProducer {
     return this.callback(combinedVars);
   }
 }
-
+// ======
 export class Literal extends ValueProducer {
   private value: Primitive | undefined;
 
@@ -68,10 +67,12 @@ export class Literal extends ValueProducer {
   }
 }
 
+// =====================
+
 abstract class NullInstruction implements Instruction<void> {
   abstract execute(buffer: PosBuffer, readerState: ReaderState): void
 }
-
+// ======
 export class SkipInstruction extends NullInstruction {
 
   constructor(private bytes: number) {
@@ -82,7 +83,7 @@ export class SkipInstruction extends NullInstruction {
     buffer.skip(this.bytes);
   }
 }
-
+// ======
 export class EndiannessInstruction extends NullInstruction {
   constructor(public mode: Mode) {
     super();
@@ -92,14 +93,14 @@ export class EndiannessInstruction extends NullInstruction {
     buffer.mode = this.mode;
   }
 }
-
+// ======
 export class PadInstruction extends NullInstruction {
 
   public execute(buffer: PosBuffer, readerState: ReaderState): void {
     buffer.pad();
   }
 }
-
+// ======
 export class IfInstruction extends NullInstruction {
   constructor(private predicate: Predicate, private otherSpec: PayloadSpec) {
     super();
@@ -114,7 +115,7 @@ export class IfInstruction extends NullInstruction {
     }
   }
 }
-
+// ======
 export class LookupInstruction extends NullInstruction {
   constructor(private valueProvider: ValueProvider, private valueMap: {[k:string]: PayloadSpec}) {
     super();
@@ -133,7 +134,7 @@ export class LookupInstruction extends NullInstruction {
     }
   }
 }
-
+// ======
 export class LoopInstruction extends ValueProducer {
   constructor(_name: string, private repeat: number | ((r: any) => number), private loopSpec: PayloadSpec) {
     super(_name, {});
