@@ -58,7 +58,7 @@ export class PayloadSpec {
     return this;
   }
 
-  public loop(name: string, repeat: number, loopSpec: PayloadSpec) {
+  public loop(name: string, repeat: number | ((r: any) => number), loopSpec: PayloadSpec) {
     this.instructions.push(new LoopInstruction(name, repeat, loopSpec));
     return this;
   }

@@ -135,12 +135,18 @@ export class LookupInstruction extends NullInstruction {
 }
 
 export class LoopInstruction extends ValueProducer {
-  constructor(_name: string, private repeat: number, private loopSpec: PayloadSpec) {
+  constructor(_name: string, private repeat: number | ((r: any) => number), private loopSpec: PayloadSpec) {
     super(_name, {});
   }
 
   execute(buffer: PosBuffer, readerState: ReaderState): Array<any> {
-    return Array(this.repeat).fill(null).map(n => {
+    const repetitions = typeof this.repeat === 'number' ? this.repeat : this.repeat({ ...readerState.result, ...readerState.storedVars })
+
+    if (typeof repetitions !== 'number' || !Number.isInteger(repetitions)) {
+      throw new Error('Loop count must be an integer');
+    } 
+
+    return Array(repetitions).fill(null).map(n => {
       const tempState = JSON.parse(JSON.stringify(readerState));
       return this.loopSpec.exec(buffer, tempState)
     });
