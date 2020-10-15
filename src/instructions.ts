@@ -8,13 +8,17 @@ export interface Instruction<T> {
   execute(buffer: PosBuffer, readerState: ReaderState): T;
 }
 
-export abstract class ValueProducer implements Instruction<Primitive> {
+export abstract class ValueProducer implements Instruction<Primitive | Array<any>> {
   constructor(protected _name: string, public options: FieldOptions | undefined) {
     this.options = options;
   }
 
-  abstract execute(buffer: PosBuffer, readerState: ReaderState): Primitive;
-  abstract readonly name: string | null;
+  abstract execute(buffer: PosBuffer, readerState: ReaderState): Primitive | Array<any>;
+  // abstract readonly name: string | null;
+
+  get name() {
+    return this._name;
+  }
 }
 
 export class Value extends ValueProducer {
@@ -37,10 +41,6 @@ export class Value extends ValueProducer {
       throw new ParsingError(`Expected ${this.name} to be ${this._shouldBe} but was ${value}`);
     }
   }
-
-  get name() {
-    return this._name;
-  }
 }
 
 export class Calculation extends ValueProducer {
@@ -52,10 +52,6 @@ export class Calculation extends ValueProducer {
   public execute(buffer: PosBuffer, readerState: ReaderState): Primitive {
     const combinedVars = { ...readerState.result, ...readerState.storedVars }
     return this.callback(combinedVars);
-  }
-
-  get name() {
-    return this._name;
   }
 }
 
@@ -70,18 +66,10 @@ export class Literal extends ValueProducer {
   execute(buffer: PosBuffer, readerState: ReaderState): Primitive {
     return this.value!;
   }
-
-  get name() {
-    return this._name;
-  }
 }
 
 abstract class NullInstruction implements Instruction<void> {
   abstract execute(buffer: PosBuffer, readerState: ReaderState): void
-
-  get name(): string | null {
-    return null;
-  }
 }
 
 export class SkipInstruction extends NullInstruction {
@@ -143,5 +131,22 @@ export class LookupInstruction extends NullInstruction {
       const subResult = otherSpec.exec(buffer);
       Object.assign(readerState.result, subResult);
     }
+  }
+}
+
+export class LoopInstruction extends ValueProducer {
+  constructor(_name: string, private repeat: number, private loopSpec: PayloadSpec) {
+    super(_name, {});
+  }
+
+  execute(buffer: PosBuffer, readerState: ReaderState): Array<any> {
+    return Array(this.repeat).fill(null).map(n => {
+      const tempState = JSON.parse(JSON.stringify(readerState));
+      return this.loopSpec.exec(buffer, tempState)
+    });
+  }
+
+  get name() {
+    return this._name;
   }
 }

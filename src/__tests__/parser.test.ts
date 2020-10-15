@@ -383,3 +383,45 @@ describe('switch', () => {
     expect(result.two).toBe(2);
   })
 });
+
+describe('loop', () => {
+  it('puts sub-spec into a nested property', () => {
+    const loopSpec = 
+      new PayloadSpec()
+        .loop('nest', 3, new PayloadSpec()
+          .field('val1', UInt8)
+          .field('val2', UInt8)
+        )
+
+    const result = loopSpec.exec(Buffer.from([0x01, 0xFF, 0x02, 0xFE, 0x03, 0xFD]));
+
+    expect(result.nest).toBeDefined();
+    expect(result.nest).toHaveLength(3);
+    expect(result.nest[0].val1).toBe(1);
+    expect(result.nest[0].val2).toBe(255);
+    expect(result.nest[1].val1).toBe(2);
+    expect(result.nest[1].val2).toBe(254);
+    expect(result.nest[2].val1).toBe(3);
+    expect(result.nest[2].val2).toBe(253);
+  })
+
+  it('can reference variables from outside the loop', () => {
+    const loopSpec = 
+      new PayloadSpec()
+        .store('var', 10)
+        .loop('nest', 2, new PayloadSpec()
+          .store('val', UInt8)
+            .derive('val1', (r) => r.var + r.val)
+          .field('val2', UInt8)
+        )
+
+    const result = loopSpec.exec(Buffer.from([0x01, 0xFF, 0x02, 0xFE]));
+
+    expect(result.nest).toBeDefined();
+    expect(result.nest).toHaveLength(2);
+    expect(result.nest[0].val1).toBe(11);
+    expect(result.nest[0].val2).toBe(255);
+    expect(result.nest[1].val1).toBe(12);
+    expect(result.nest[1].val2).toBe(254);
+  })
+})

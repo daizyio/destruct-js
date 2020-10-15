@@ -1,4 +1,4 @@
-import { Instruction, Primitive, Value, Literal, Calculation, SkipInstruction, IfInstruction, LookupInstruction, PadInstruction, EndiannessInstruction, ValueProducer, Predicate, ValueProvider } from './instructions';
+import { Instruction, Primitive, Value, Literal, Calculation, SkipInstruction, IfInstruction, LookupInstruction, PadInstruction, EndiannessInstruction, ValueProducer, Predicate, ValueProvider, LoopInstruction } from './instructions';
 import { PosBuffer, DataTypeCtor, Encoding, Mode, NumericTypeCtor } from './pos_buffer';
 
 export class PayloadSpec {
@@ -58,12 +58,17 @@ export class PayloadSpec {
     return this;
   }
 
-  public exec(data: Buffer | PosBuffer): any {
+  public loop(name: string, repeat: number, loopSpec: PayloadSpec) {
+    this.instructions.push(new LoopInstruction(name, repeat, loopSpec));
+    return this;
+  }
+
+  public exec(data: Buffer | PosBuffer, initialState?: ReaderState): any {
     const posBuffer = data instanceof PosBuffer ? data : new PosBuffer(data, { endianness: this.mode });
 
     const reader = new BufferReader(posBuffer, this.mode, this.instructions);
   
-    return reader.read();
+    return reader.read(initialState);
   }
 }
 
@@ -78,34 +83,31 @@ export interface FieldOptions {
   store?: boolean;
 }
 
-export type ReaderState = { result: any, storedVars: any};
+export type ReaderState = { result: any, storedVars: any };
 
 class BufferReader {
   constructor(private posBuffer: PosBuffer, private _mode: Mode = Mode.BE, private instructions: Instruction<any>[]) {
   }
   
-  public read(): any {
-    const result: any = {};
-    const storedVars: any = {};
-
+  public read(state: ReaderState = { result: {}, storedVars: {} }): any {
     for(const instruction of this.instructions) {
-      const readerState = { result, storedVars, mode: this._mode, offset: this.posBuffer.offset }
+      // const readerState = { result, storedVars, mode: this._mode, offset: this.posBuffer.offset }
       if (instruction instanceof ValueProducer) {
-        const value = instruction.execute(this.posBuffer, readerState);
+        const value = instruction.execute(this.posBuffer, state);
 
         if (instruction.name) {
           if (instruction.options?.store) {
-            storedVars[instruction.name] = value;
+            state.storedVars[instruction.name] = value;
           } else {
-            result[instruction.name] = value;
+            state.result[instruction.name] = value;
           }
         }
       } else {
-        instruction.execute(this.posBuffer, readerState);
+        instruction.execute(this.posBuffer, state);
       }
-    }
+    } 
 
-    return result;
+    return state.result;
   }
 }
 
