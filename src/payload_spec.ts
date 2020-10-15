@@ -61,10 +61,12 @@ export class PayloadSpec {
     return this;
   }
 
-  public exec(data: Buffer, initialState?: ReaderState): any {
-    const reader = new BufferReader(this.mode, this.instructions, initialState);
+  public exec(data: Buffer | PosBuffer, initialState?: ReaderState): any {
+    const posBuffer = data instanceof PosBuffer ? data : new PosBuffer(data, { endianness: this.mode });
+
+    const reader = new BufferReader(posBuffer, this.mode, this.instructions);
   
-    return reader.read(data);
+    return reader.read();
   }
 }
 
@@ -201,7 +203,7 @@ class IfInstruction extends NullInstruction {
     const shouldExec = this.predicate({ ...readerState.result, ...readerState.storedVars });
 
     if (shouldExec) {
-      const subResult = this.otherSpec.exec(buffer.buffer, { ...readerState, offset: buffer.offset });
+      const subResult = this.otherSpec.exec(buffer, { ...readerState, offset: buffer.offset });
       Object.assign(readerState.result, subResult);
     }
   }
@@ -220,30 +222,24 @@ class LookupInstruction extends NullInstruction {
     const otherSpec = this.valueMap[value.toString()] ?? this.valueMap['default'];
 
     if (otherSpec) {
-      const subResult = otherSpec.exec(buffer.buffer, readerState);
+      const subResult = otherSpec.exec(buffer, readerState);
       Object.assign(readerState.result, subResult);
     }
   }
 }
 
 class BufferReader {
-  private offset: { bytes: number, bits: number };
-
-  constructor(private _mode: Mode = Mode.BE, private instructions: Instruction<any>[], initialState?: ReaderState) {
-    this.offset = initialState?.offset || { bytes: 0, bits: 0};
+  constructor(private posBuffer: PosBuffer, private _mode: Mode = Mode.BE, private instructions: Instruction<any>[]) {
   }
   
-  public read(originalBuffer: Buffer): any {
+  public read(): any {
     const result: any = {};
     const storedVars: any = {};
 
-    const buffer = new PosBuffer(originalBuffer, { endianness: this._mode });
-    buffer.offset = this.offset;
-
     for(const instruction of this.instructions) {
-      const readerState = { result, storedVars, mode: this._mode, offset: buffer.offset }
+      const readerState = { result, storedVars, mode: this._mode, offset: this.posBuffer.offset }
       if (instruction instanceof ValueProducer) {
-        const value = instruction.execute(buffer, readerState);
+        const value = instruction.execute(this.posBuffer, readerState);
 
         if (instruction.name) {
           if (instruction.options?.store) {
@@ -253,7 +249,7 @@ class BufferReader {
           }
         }
       } else {
-        instruction.execute(buffer, readerState);
+        instruction.execute(this.posBuffer, readerState);
       }
     }
 
