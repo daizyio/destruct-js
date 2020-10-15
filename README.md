@@ -212,6 +212,8 @@ You can conditionally parse parts of the buffer using some control statements th
 
 `switch((r: any) => string | number | boolean, {[k:string]: PayloadSpec})` - looks up the value returned from the function in a map, and executes the associated spec.  Note that the function may return any primitive, but it will be converted to a string, and the keys of the map *must* be strings.  If the value returned from the function is not found in the map, the option with a key of `default` will be used.  No error will be thrown if neither the value nor 'default' exist in the map.
 
+`loop(string, number | ((r:any) => number), PayloadSpec)` - repeats the specified PayloadSpec the given number of times, either a literal number or a function that returns a number. Specs are returned as a nested entry in the result under the given name.
+
 Position control
 ---
 

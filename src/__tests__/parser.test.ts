@@ -463,4 +463,30 @@ describe('loop', () => {
 
     expect(() => loopSpec.exec(Buffer.from([0x40, 0x49, 0x0F, 0xD0, 0xFF, 0xFE]))).toThrowError('Loop count must be an integer');
   })
+
+  it('can be nested', () => {
+    const loopSpec = 
+      new PayloadSpec()
+        .loop('level1', 2, new PayloadSpec()
+          .field('l1Size', UInt8)
+          .loop('level2', (r) => r.l1Size, new PayloadSpec()
+            .field('l2Value', UInt8))
+        )
+
+    const result = loopSpec.exec(Buffer.from([0x02, 0xFF, 0xFE, 0x03, 0x10, 0x11, 0x12]));
+
+    expect(result.level1).toBeDefined();
+    expect(result.level1).toHaveLength(2);
+    expect(result.level1[0].l1Size).toBe(2);
+    expect(result.level1[0].level2).toHaveLength(2);
+    expect(result.level1[0].level2[0].l2Value).toBe(255);
+    expect(result.level1[0].level2[1].l2Value).toBe(254);
+
+    expect(result.level1[1].l1Size).toBe(3);
+    expect(result.level1[1].level2).toHaveLength(3);
+    expect(result.level1[1].level2[0].l2Value).toBe(16);
+    expect(result.level1[1].level2[1].l2Value).toBe(17);
+    expect(result.level1[1].level2[2].l2Value).toBe(18);
+
+  })
 })
