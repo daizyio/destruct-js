@@ -9,8 +9,16 @@ export interface Instruction<T> {
 }
 // ======
 export abstract class ValueProducer implements Instruction<Primitive | Array<any>> {
-  constructor(protected _name: string, public options: FieldOptions | undefined) {
+  constructor(public options: FieldOptions | undefined) {
     this.options = options;
+  }
+
+  abstract execute(buffer: PosBuffer, readerState: ReaderState): Primitive | Array<any>;
+}
+// ======
+export abstract class NamedValueProducer extends ValueProducer {
+  constructor(protected _name: string, public options: FieldOptions | undefined) {
+    super(options)
   }
 
   abstract execute(buffer: PosBuffer, readerState: ReaderState): Primitive | Array<any>;
@@ -20,7 +28,7 @@ export abstract class ValueProducer implements Instruction<Primitive | Array<any
   }
 }
 // ======
-export class Value extends ValueProducer {
+export class Value extends NamedValueProducer {
   private _shouldBe: string | number | boolean | null;
 
   constructor(_name: string, private Type: DataTypeCtor, options: FieldOptions | undefined) {
@@ -42,7 +50,7 @@ export class Value extends ValueProducer {
   }
 }
 // ======
-export class Calculation extends ValueProducer {
+export class Calculation extends NamedValueProducer {
 
   constructor(_name: string, private callback: ValueProvider) {
     super(_name, { store: false });
@@ -54,7 +62,7 @@ export class Calculation extends ValueProducer {
   }
 }
 // ======
-export class Literal extends ValueProducer {
+export class Literal extends NamedValueProducer {
   private value: Primitive | undefined;
 
   constructor(name: string, options?: FieldOptions) {
@@ -101,24 +109,23 @@ export class PadInstruction extends NullInstruction {
   }
 }
 // ======
-export class IfInstruction extends NullInstruction {
+export class IfInstruction extends ValueProducer {
   constructor(private predicate: Predicate, private otherSpec: PayloadSpec) {
-    super();
+    super({});
   }
 
   public execute(buffer: PosBuffer, readerState: ReaderState) {
     const shouldExec = this.predicate({ ...readerState.result, ...readerState.storedVars });
 
     if (shouldExec) {
-      const subResult = this.otherSpec.exec(buffer);
-      Object.assign(readerState.result, subResult);
+      return this.otherSpec.exec(buffer, readerState);
     }
   }
 }
 // ======
-export class LookupInstruction extends NullInstruction {
+export class LookupInstruction extends ValueProducer {
   constructor(private valueProvider: ValueProvider, private valueMap: {[k:string]: PayloadSpec}) {
-    super();
+    super({});
   }
 
   public execute(buffer: PosBuffer, readerState: ReaderState) {
@@ -129,13 +136,12 @@ export class LookupInstruction extends NullInstruction {
     const otherSpec = this.valueMap[value.toString()] ?? this.valueMap['default'];
 
     if (otherSpec) {
-      const subResult = otherSpec.exec(buffer);
-      Object.assign(readerState.result, subResult);
+      return otherSpec.exec(buffer);
     }
   }
 }
 // ======
-export class LoopInstruction extends ValueProducer {
+export class LoopInstruction extends NamedValueProducer {
   constructor(_name: string, private repeat: number | ((r: any) => number), private loopSpec: PayloadSpec) {
     super(_name, {});
   }

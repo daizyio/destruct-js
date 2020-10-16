@@ -1,4 +1,4 @@
-import { Instruction, Primitive, Value, Literal, Calculation, SkipInstruction, IfInstruction, LookupInstruction, PadInstruction, EndiannessInstruction, ValueProducer, Predicate, ValueProvider, LoopInstruction } from './instructions';
+import { Instruction, Primitive, Value, Literal, Calculation, SkipInstruction, IfInstruction, LookupInstruction, PadInstruction, EndiannessInstruction, ValueProducer, Predicate, ValueProvider, LoopInstruction, NamedValueProducer } from './instructions';
 import { PosBuffer, DataTypeCtor, Encoding, Mode, NumericTypeCtor } from './pos_buffer';
 
 export interface FieldOptions {
@@ -90,23 +90,27 @@ class BufferReader {
   }
   
   public read(state: ReaderState = { result: {}, storedVars: {} }): any {
+    const result: {[k:string]: any} = {};
     for(const instruction of this.instructions) {
       if (instruction instanceof ValueProducer) {
         const value = instruction.execute(this.posBuffer, state);
 
-        if (instruction.name) {
+        if (instruction instanceof NamedValueProducer) {
           if (instruction.options?.store) {
             state.storedVars[instruction.name] = value;
           } else {
-            state.result[instruction.name] = value;
+            result[instruction.name] = value;
           }
+        } else {
+          Object.assign(result, value);
         }
       } else {
         instruction.execute(this.posBuffer, state);
       }
+      Object.assign(state.result, result);
     } 
 
-    return state.result;
+    return result;
   }
 }
 

@@ -405,6 +405,25 @@ describe('loop', () => {
     expect(result.nest[2].val2).toBe(253);
   })
 
+  it('does not duplicate values in nested specs', () => {
+    const loopSpec = 
+      new PayloadSpec()
+        .field('topLevel', UInt8)
+        .loop('nest', 3, new PayloadSpec()
+          .field('val1', UInt8)
+          .field('val2', UInt8)
+        )
+
+    const result = loopSpec.exec(Buffer.from([0x10, 0x01, 0xFF, 0x02, 0xFE, 0x03, 0xFD]));
+
+    expect(result.topLevel).toBe(16);
+    expect(result.nest).toBeDefined();
+    expect(result.nest).toHaveLength(3);
+    expect(result.nest[0].val1).toBe(1);
+    expect(result.nest[0].val2).toBe(255);
+    expect(result.nest[0].topLevel).toBeUndefined();
+  })
+
   it('can reference variables from outside the loop', () => {
     const loopSpec = 
       new PayloadSpec()
