@@ -259,3 +259,9 @@ const result =
 expect(result.countBE).toBe(65328);
 expect(result.countLE).toBe(65328);
 ```
+
+Extras
+===
+
+`tap((Buffer, ReaderState) => void)` - use `.tap()` to perform some action at some point in the parsing, for example printing something to the console.  The buffer is a `PosBuffer` which has an `offset` property that you can use to check the current position in the buffer.  The `offset.bytes` property gives the position in bytes, and the `offset.bits` property gives a bit offset within the current byte, if `Bit`s or `Bool`s have been read.  The `ReaderState` contains the current `result` i.e. any data from a `field` or `derive` statement, and also `storedVars` for any `store` operations i.e. data that has been fetched/calculated but will not appear in the final result.  Note that both the `Buffer` and `ReaderState` are mutable - by changing them you may either wield great power or wreak great havoc.
+
