@@ -303,16 +303,28 @@ describe('Skipping', () => {
     expect(buffer.skip(-1).read(UInt8)).toBe(196);
   })
 
+  it('can skip to after the final byte of the buffer', () => {
+    const buffer = new PosBuffer([0xAE, 0xC4, 0x00, 0xC5, 0x33]);
+
+    expect(() => buffer.skip(5)).not.toThrowError();
+  })
+
   it('cannot be skipped beyond the end of the buffer', () => {
     const buffer = new PosBuffer([0xAE, 0xC4, 0x00, 0xC5, 0x33]);
 
-    expect(() => buffer.skip(5)).toThrowError(new Error('Attempt to skip outside the buffer'));
+    expect(() => buffer.skip(6)).toThrowError(new Error('Attempt to skip outside the buffer'));
   })
 
   it('cannot be skipped before the start of the buffer', () => {
     const buffer = new PosBuffer([0xAE]);
 
     expect(() => buffer.skip(-1)).toThrowError(new Error('Attempt to skip outside the buffer'));
+  })
+
+  it('can be skipped to before first byte of the buffer', () => {
+    const buffer = new PosBuffer([0xAE]);
+
+    expect(() => buffer.skip(1).skip(-1)).not.toThrowError();
   })
 
   it('can add skips together', () => {

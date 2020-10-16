@@ -41,7 +41,7 @@ export class PosBuffer {
 
   public skip(bytes: number): PosBuffer {
     this.updateOffset(bytes * 8);
-    if (this.offsetBytes > this._buffer.length - 1 || this.offsetBytes < 0) {
+    if (this.offsetBytes > this._buffer.length || this.offsetBytes < 0) {
       throw new Error('Attempt to skip outside the buffer');
     }
     return this;

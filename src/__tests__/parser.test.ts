@@ -50,6 +50,17 @@ describe('skip', () => {
     expect(result.temp).toBe(127);
     expect(result.humidity).toBe(1);
   });
+
+  it('allows skip to the final byte of the buffer', () => {
+    const spec = new PayloadSpec();
+    
+    spec.field('count', UInt8)
+        .skip(Int8)
+        .field('temp', UInt8)
+        .skip(UInt32)
+        
+    expect(() => spec.exec(Buffer.from([0x16, 0x00, 0x7F, 0x00, 0x00, 0x00, 0x01]))).not.toThrowError();
+  });
 });
 
 describe('endianness', () => {
@@ -506,6 +517,21 @@ describe('loop', () => {
     expect(result.level1[1].level2[0].l2Value).toBe(16);
     expect(result.level1[1].level2[1].l2Value).toBe(17);
     expect(result.level1[1].level2[2].l2Value).toBe(18);
+  })
+})
 
+describe('tap', () => {
+  it('executes the provided code and passes the buffer and current state', () => {
+    let fieldOne = null;
+    const tappedSpec = 
+      new PayloadSpec()
+        .field('one', UInt8)
+        .tap((buffer, readerState) => fieldOne = readerState.result.one)
+        .field('two', UInt8)
+
+    const result = tappedSpec.exec(Buffer.from([0x10, 0x01]))
+
+    expect(result.one).toBe(16)
+    expect(fieldOne).toBe(16);
   })
 })

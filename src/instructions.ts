@@ -27,7 +27,9 @@ export abstract class NamedValueProducer extends ValueProducer {
     return this._name;
   }
 }
-// ======
+
+// ======  VALUE PRODUCERS ====
+
 export class Value extends NamedValueProducer {
   private _shouldBe: string | number | boolean | null;
 
@@ -72,40 +74,6 @@ export class Literal extends NamedValueProducer {
 
   execute(buffer: PosBuffer, readerState: ReaderState): Primitive {
     return this.value!;
-  }
-}
-
-// =====================
-
-abstract class NullInstruction implements Instruction<void> {
-  abstract execute(buffer: PosBuffer, readerState: ReaderState): void
-}
-// ======
-export class SkipInstruction extends NullInstruction {
-
-  constructor(private bytes: number) {
-    super();
-  }
-
-  public execute(buffer: PosBuffer, reader: ReaderState): void {
-    buffer.skip(this.bytes);
-  }
-}
-// ======
-export class EndiannessInstruction extends NullInstruction {
-  constructor(public mode: Mode) {
-    super();
-  }
-
-  public execute(buffer: PosBuffer, readerState: ReaderState): void {
-    buffer.mode = this.mode;
-  }
-}
-// ======
-export class PadInstruction extends NullInstruction {
-
-  public execute(buffer: PosBuffer, readerState: ReaderState): void {
-    buffer.pad();
   }
 }
 // ======
@@ -161,5 +129,49 @@ export class LoopInstruction extends NamedValueProducer {
 
   get name() {
     return this._name;
+  }
+}
+
+// ======= NULL INSTRUCTIONS ==============
+
+abstract class NullInstruction implements Instruction<void> {
+  abstract execute(buffer: PosBuffer, readerState: ReaderState): void
+}
+// ======
+export class SkipInstruction extends NullInstruction {
+
+  constructor(private bytes: number) {
+    super();
+  }
+
+  public execute(buffer: PosBuffer, reader: ReaderState): void {
+    buffer.skip(this.bytes);
+  }
+}
+// ======
+export class EndiannessInstruction extends NullInstruction {
+  constructor(public mode: Mode) {
+    super();
+  }
+
+  public execute(buffer: PosBuffer, readerState: ReaderState): void {
+    buffer.mode = this.mode;
+  }
+}
+// ======
+export class PadInstruction extends NullInstruction {
+
+  public execute(buffer: PosBuffer, readerState: ReaderState): void {
+    buffer.pad();
+  }
+}
+// ======
+export class TapInstruction extends NullInstruction {
+  constructor(private callback: (buffer: PosBuffer, readerState: ReaderState) => void) {
+   super(); 
+  }
+
+  public execute(buffer: PosBuffer, readerState: ReaderState): void {
+    this.callback(buffer, readerState);
   }
 }

@@ -1,4 +1,4 @@
-import { Instruction, Primitive, Value, Literal, Calculation, SkipInstruction, IfInstruction, LookupInstruction, PadInstruction, EndiannessInstruction, ValueProducer, Predicate, ValueProvider, LoopInstruction, NamedValueProducer } from './instructions';
+import { Instruction, Primitive, Value, Literal, Calculation, SkipInstruction, IfInstruction, LookupInstruction, PadInstruction, EndiannessInstruction, ValueProducer, Predicate, ValueProvider, LoopInstruction, NamedValueProducer, TapInstruction } from './instructions';
 import { PosBuffer, DataTypeCtor, Encoding, Mode, NumericTypeCtor } from './pos_buffer';
 
 export interface FieldOptions {
@@ -76,6 +76,11 @@ export class PayloadSpec {
     return this;
   }
 
+  public tap(callback: (buffer: PosBuffer, state: ReaderState) => void) {
+    this.instructions.push(new TapInstruction(callback));
+    return this;
+  }
+
   public exec(data: Buffer | PosBuffer, initialState?: ReaderState): any {
     const posBuffer = data instanceof PosBuffer ? data : new PosBuffer(data, { endianness: this.mode });
 
@@ -91,6 +96,7 @@ class BufferReader {
   
   public read(state: ReaderState = { result: {}, storedVars: {} }): any {
     const result: {[k:string]: any} = {};
+
     for(const instruction of this.instructions) {
       if (instruction instanceof ValueProducer) {
         const value = instruction.execute(this.posBuffer, state);
