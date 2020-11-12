@@ -18,7 +18,7 @@ export class PayloadSpec {
 
   private instructions: Instruction<any>[] = [];
 
-  constructor(private mode: Mode = Mode.BE) {}
+  constructor(private options: ParsingOptions = { lenient: false, mode: Mode.BE }) {}
 
   public field(name: string, Type: DataTypeCtor | Primitive, options?: FieldOptions): PayloadSpec {
     if (typeof Type === 'function') {
@@ -82,7 +82,7 @@ export class PayloadSpec {
   }
 
   public exec(data: Buffer | PosBuffer, initialState?: ReaderState): any {
-    const posBuffer = data instanceof PosBuffer ? data : new PosBuffer(data, { endianness: this.mode });
+    const posBuffer = data instanceof PosBuffer ? data : new PosBuffer(data, { endianness: this.options.mode, lenient: this.options.lenient });
 
     const reader = new BufferReader(posBuffer, this.instructions);
   
@@ -122,4 +122,9 @@ class BufferReader {
 
 export class ParsingError extends Error {
 
+}
+
+export interface ParsingOptions {
+  mode?: Mode;
+  lenient?: boolean;
 }

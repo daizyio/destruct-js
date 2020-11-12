@@ -267,6 +267,24 @@ describe('padding', () => {
   })
 })
 
+describe('Lenient mode', () => {
+  it('returns undefined if reading past the end of the buffer', () => {
+    const buffer = new PosBuffer([0x80, 0x02], { lenient: true });
+
+    buffer.read(UInt16);
+    expect(buffer.read(UInt8)).toBeUndefined();
+    expect(buffer.read(UInt16)).toBeUndefined();
+    expect(buffer.read(Float)).toBeUndefined();
+  })
+
+  it('errors if reading past the end of the buffer and lenient mode is false', () => {
+    const buffer = new PosBuffer([0x80, 0x02], { lenient: false });
+
+    buffer.read(UInt16);
+    expect(() => buffer.read(UInt8)).toThrowError();
+  })
+})
+
 describe('Endianness', () => {
   it('can have endianness set in the constructor', () => {
     const buffer = new PosBuffer([0xAE, 0xC4, 0xFA, 0xAE, 0xC4, 0x45], { endianness: Mode.LE});
@@ -424,7 +442,7 @@ describe('Read many', () => {
 
     const loopCount = buffer.read(UInt8);
 
-    for (let i = 0; i < loopCount; i++) {
+    for (let i = 0; i < loopCount! ; i++) {
       const value = buffer.read(UInt8);
       expect(value).toBe(i + 1);
     }

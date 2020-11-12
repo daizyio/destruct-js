@@ -16,6 +16,20 @@ describe('Simple fields', () => {
     expect(result.temp).toBe(2);
     expect(result.pi).toBe(3.141590118408203);
   });
+
+  it('can use lenient mode to stop parsing when buffer ends', () => {
+    const spec = new PayloadSpec({ lenient: true });
+
+    spec.field('count', UInt8)
+        .field('temp', UInt8)
+        .field('optional', UInt8)
+
+    const result = spec.exec(Buffer.from([0xFF, 0x02]));
+
+    expect(result.count).toBe(255);
+    expect(result.temp).toBe(2);
+    expect(result.optional).toBeUndefined();
+  })
 });
 describe('skip', () => {
   it('skips a number of bytes', () => {
@@ -66,7 +80,7 @@ describe('skip', () => {
 describe('endianness', () => {
   it('can switch enddianness', () => {
     const result = 
-      new PayloadSpec(Mode.BE)
+      new PayloadSpec({ mode: Mode.BE })
         .field('countBE', UInt16)
           .endianness(Mode.LE)
         .field('countLE', UInt16)

@@ -15,9 +15,13 @@ export class PosBuffer {
     this.offsetBits = options?.offset?.bits || 0;
   }
 
-  public read(dataType: DataTypeCtor, options?: TypeOptions): string | number | boolean {
+  public read(dataType: DataTypeCtor, options?: TypeOptions): string | number | boolean | undefined {
     if (this.offsetBytes > this._buffer.length - 1) {
-      throw new Error('Attempt to read outside of the buffer');
+      if (this.options.lenient) {
+        return undefined;
+      } else {
+        throw new Error('Attempt to read outside of the buffer');
+      }
     }
 
     const dataInstruction = new dataType(options);
@@ -33,7 +37,7 @@ export class PosBuffer {
     return thennedValue;
   }
 
-  public readMany(dataTypes: { type: DataTypeCtor, options?: TypeOptions }[]): (string | number | boolean)[] {
+  public readMany(dataTypes: { type: DataTypeCtor, options?: TypeOptions }[]): (string | number | boolean | undefined)[] {
     return dataTypes.map((dt) => {
       return this.read(dt.type, dt.options);
     })
@@ -124,6 +128,7 @@ export type Encoding = 'ascii' | 'utf8' | 'utf-8' | 'utf16le' | 'ucs2' | 'ucs-2'
 export interface BufferOptions {
   endianness?: Mode;
   offset?: { bytes: number, bits: number };
+  lenient?: boolean;
 }
 
 export interface TypeOptions {

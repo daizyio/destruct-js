@@ -28,7 +28,7 @@ describe('UInt8', () => {
   })
 
   it('ignores endianness', () => {
-    const spec = new PayloadSpec(Mode.LE);
+    const spec = new PayloadSpec({ mode: Mode.LE });
   
     spec.field('count', UInt8);
   
@@ -80,7 +80,7 @@ describe('Int8', () => {
   })
 
   it('ignores endianness', () => {
-    const spec = new PayloadSpec(Mode.LE);
+    const spec = new PayloadSpec({ mode: Mode.LE });
   
     spec.field('count', Int8);
   
@@ -124,7 +124,7 @@ describe('UInt16', () => {
   });
 
   it('observes endianness', () => {
-    const spec = new PayloadSpec(Mode.LE);
+    const spec = new PayloadSpec({ mode: Mode.LE });
   
     spec.field('count', UInt16);
   
@@ -159,7 +159,7 @@ describe('Int16', () => {
   });
 
   it('observes endianness', () => {
-    const spec = new PayloadSpec(Mode.LE);
+    const spec = new PayloadSpec({ mode: Mode.LE });
   
     spec.field('count', Int16);
   
@@ -193,7 +193,7 @@ describe('UInt32', () => {
   });
 
   it('observes endianness', () => {
-    const spec = new PayloadSpec(Mode.LE);
+    const spec = new PayloadSpec({ mode: Mode.LE });
   
     spec.field('count', UInt32);
   
@@ -227,7 +227,7 @@ describe('Int32', () => {
   });
 
   it('observes endianness', () => {
-    const spec = new PayloadSpec(Mode.LE);
+    const spec = new PayloadSpec({ mode: Mode.LE });
   
     spec.field('count', Int32);
   
@@ -261,7 +261,7 @@ describe('Float', () => {
   });
 
   it('observes endianness', () => {
-    const spec = new PayloadSpec(Mode.LE);
+    const spec = new PayloadSpec({ mode: Mode.LE });
   
     spec.field('count', Float);
   
@@ -307,7 +307,7 @@ describe('Double', () => {
   });
 
   it('observes endianness', () => {
-    const spec = new PayloadSpec(Mode.LE);
+    const spec = new PayloadSpec({ mode: Mode.LE });
   
     spec.field('count', Double);
   

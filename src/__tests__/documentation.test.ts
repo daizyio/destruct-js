@@ -112,7 +112,7 @@ describe('Documentation examples', () => {
   
   test('endianness example', () => {
     const result = 
-      new PayloadSpec(Mode.BE)
+      new PayloadSpec({ mode: Mode.BE })
         .field('countBE', UInt16)
         .endianness(Mode.LE)
         .field('countLE', UInt16)

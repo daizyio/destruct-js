@@ -26,14 +26,14 @@ expect(result.temperature).toBe(100);
 expect(result.stationId).toBe('BH6');
 ```
 
-Specifications are declared using the `PayloadSpec` object.  To get started, create a `PayloadSpec`.  You can pass the endianness in the constructor, with the default being big endian if nothing is specified.
+Specifications are declared using the `PayloadSpec` object.  To get started, create a `PayloadSpec`.  You can pass options in the constructor.
 
 ```
-const leSpec = new PayloadSpec(Mode.LE); // little endian
-const beSpec = new PayloadSpec();        // big endian is the default
+const leSpec = new PayloadSpec({ mode: Mode.LE, lenient: true }); // little endian
+const beSpec = new PayloadSpec();        // big endian, non-lenient is the default
 ```
 
-Each field in the buffer is specified in order.  Each field has a name, and a data type.  When you call `spec.exec(buffer)`, the buffer is read "left to right", filling a JSON object with field names as keys, which is returned to you once it's finished.  Your spec does not need to read the whole buffer if you don't need to, but obviously you will get an error if you try and read beyond the end of the buffer.
+Each field in the buffer is specified in order.  Each field has a name, and a data type.  When you call `spec.exec(buffer)`, the buffer is read "left to right", filling a JSON object with field names as keys, which is returned to you once it's finished.  Your spec does not need to read the whole buffer if you don't need to.  By default, you will get an error if you try and read beyond the end of the buffer.  If you specify `lenient` mode in the options, any attempt to read once the end of the buffer has been read returns `undefined`.
 
 Numeric Data Types
 ===
@@ -250,7 +250,7 @@ expect(result.count).toBe(2);
 
 ```
 const result = 
-  new PayloadSpec(Mode.BE)
+  new PayloadSpec({ mode: Mode.BE })
     .field('countBE', UInt16)
     .endianness(Mode.LE)
     .field('countLE', UInt16)

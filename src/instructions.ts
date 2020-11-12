@@ -5,7 +5,7 @@ export type ValueProvider = (r: any) => Primitive;
 export type Primitive = number | string | boolean;
 
 export interface Instruction<T> {
-  execute(buffer: PosBuffer, readerState: ReaderState): T;
+  execute(buffer: PosBuffer, readerState: ReaderState): T | undefined;
 }
 // ======
 export abstract class ValueProducer implements Instruction<Primitive | Array<any>> {
@@ -13,7 +13,7 @@ export abstract class ValueProducer implements Instruction<Primitive | Array<any
     this.options = options;
   }
 
-  abstract execute(buffer: PosBuffer, readerState: ReaderState): Primitive | Array<any>;
+  abstract execute(buffer: PosBuffer, readerState: ReaderState): Primitive | Array<any> | undefined;
 }
 // ======
 export abstract class NamedValueProducer extends ValueProducer {
@@ -21,7 +21,7 @@ export abstract class NamedValueProducer extends ValueProducer {
     super(options)
   }
 
-  abstract execute(buffer: PosBuffer, readerState: ReaderState): Primitive | Array<any>;
+  abstract execute(buffer: PosBuffer, readerState: ReaderState): Primitive | Array<any> | undefined;
 
   get name() {
     return this._name;
@@ -38,7 +38,7 @@ export class Value extends NamedValueProducer {
     this._shouldBe = options?.shouldBe ?? null;
   }
 
-  execute(buffer: PosBuffer, readerState: ReaderState): Primitive {
+  execute(buffer: PosBuffer, readerState: ReaderState): Primitive | undefined {
     const value = buffer.read(this.Type, this.options);
     this.check(value);
     
