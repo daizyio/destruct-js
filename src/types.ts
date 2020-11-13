@@ -139,6 +139,21 @@ export class Text extends DataType {
     return workingBuffer.toString(this.encoding);
   }
 
+  public write(buffer: PosBuffer, value: string): Buffer {
+    const substring = this._size ? value.substring(0, this._size) : value;
+    const returnBuffer = Buffer.from(substring, this.encoding);
+
+    if (typeof this.terminator !== 'undefined') {
+      const terminatedBuffer = Buffer.concat([returnBuffer, Buffer.from([this.terminator])]);
+      this._size = terminatedBuffer.length;
+      return terminatedBuffer;
+    } else {
+      this._size = returnBuffer.length;
+      return returnBuffer;
+    }
+    
+  }
+
   get size() {
     return this._size * 8;
   }
@@ -176,6 +191,15 @@ export abstract class Bits extends DataType {
     return result;
   }
 
+  public write(buffer: PosBuffer, value: number | boolean): Buffer {
+    const numValue: number = typeof value === 'number' ? value : (value ? 1 : 0);
+    const startPos = buffer.offset.bits;
+    for (let i = 0; i < this._size; i++) {
+      buffer.flipBits((startPos + i) % 8, (numValue >> (this._size - i - 1)) & 0x1);
+    }    
+    return Buffer.from([]);
+  }
+
   get size() {
     return this._size;
   }
@@ -189,6 +213,11 @@ export class Bool extends Bits {
   execute(buffer: PosBuffer): string | number | boolean {
     const value = super.execute(buffer);
     return value === 1;
+  }
+
+  public write(buffer: PosBuffer, value: boolean): Buffer {
+    buffer.flipBits(buffer.offset.bits, value ? 1 : 0);
+    return Buffer.from([]);
   }
 }
 

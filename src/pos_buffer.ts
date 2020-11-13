@@ -10,6 +10,7 @@ export class PosBuffer {
   private offsetBits: number = 0;
 
   private writeBuffers: [buffer: Buffer, offset: number][] = [];
+  private writeBitBuffer: number = 0;
 
   constructor(bytes: Buffer | number[], private options: BufferOptions = {}) {
     this._buffer = Buffer.from(bytes);
@@ -39,8 +40,8 @@ export class PosBuffer {
     return thennedValue;
   }
 
-  public write(dataType: DataTypeCtor, value: string | number | boolean): Buffer {
-    const dataInstruction = new dataType();
+  public write(dataType: DataTypeCtor, value: string | number | boolean, options?: TypeWriteOptions): Buffer {
+    const dataInstruction = new dataType(options);
     const newBuffer = dataInstruction.write(this, value);
 
     this.updateOffset(dataInstruction.size);
@@ -77,6 +78,7 @@ export class PosBuffer {
 
   public pad(): PosBuffer {
     if (this.offsetBits != 0) {
+      this.finaliseBitBuffer();
       this.offsetBytes += 1;
       this.offsetBits = 0;
     }
@@ -105,6 +107,10 @@ export class PosBuffer {
   }
 
   get buffer(): Buffer {
+    if (this.offsetBits != 0) {
+      this.finaliseBitBuffer();
+    }
+
     if (this._buffer.length == 0 && this.writeBuffers.length > 0) {
       this._buffer = Buffer.concat(this.writeBuffers.map((wb) => wb[0]))
     }
@@ -121,6 +127,19 @@ export class PosBuffer {
   set offset(offset: { bytes: number, bits: number}) {
     this.offsetBytes = offset.bytes;
     this.offsetBits = offset.bits;
+  }
+
+  public flipBits(bitPos: number, value: number) {
+    this.writeBitBuffer = this.writeBitBuffer | (value << (7 - bitPos))
+    if (bitPos == 7) {
+      this.finaliseBitBuffer();
+      this.offsetBytes += 1;
+    }
+  }
+
+  private finaliseBitBuffer() {
+    this.writeBuffers.push([Buffer.from([this.writeBitBuffer]), this.offset.bytes])
+    this.writeBitBuffer = 0;
   }
 
   private addOffset(bitSize: number): { bytes: number, bits: number} {
@@ -151,6 +170,12 @@ export interface TypeOptions {
   terminator?: string | number;
   dp?: number;
   then?: (v: any) => Primitive;
+}
+
+export interface TypeWriteOptions {
+  encoding?: Encoding,
+  terminator?: string | number;
+  size?: number;
 }
 
 export enum Mode {

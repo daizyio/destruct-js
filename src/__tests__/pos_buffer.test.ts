@@ -256,13 +256,28 @@ describe('Text', () => {
     expect(buffer.read(Text)).toBe('bob');
   });
 
-  it('sets offsets correctly', () => {
+
+  it('writes text as ascii', () => {
+    const buffer = new PosBuffer([]);
+
+    buffer.write(Text, 'bob');
+    expect(buffer).toBeHex('626F62');
+  });
+
+  it('can read a specified size', () => {
     const buffer = new PosBuffer([0xFF, 0x30, 0x62, 0x6f, 0x62, 0xA0]);
 
     expect(buffer.read(Int16)).toBe(-208);
-    expect(buffer.read(Text, { size: 3})).toBe('bob');
+    expect(buffer.read(Text, { size: 3 })).toBe('bob');
     expect(buffer.read(UInt8)).toBe(160);
   });
+
+  it('can write a specified size', () => {
+    const buffer = new PosBuffer([]);
+
+    buffer.write(Text, 'bobalobacus', { size: 3 });
+    expect(buffer).toBeHex('626F62');
+  })
 
   it('uses utf8 by default', () => {
     const buffer = new PosBuffer([0xE3, 0x83, 0xA6, 0xE3, 0x83, 0x8B, 0xE3, 0x82, 0xB3, 0xE3, 0x83, 0xBC, 0xE3, 0x83, 0x89]);
@@ -270,16 +285,37 @@ describe('Text', () => {
     expect(buffer.read(Text, { size: 15 })).toBe('ユニコード');
   });
 
-  it('can use other encodings', () => {
+  it('writes utf8 by default', () => {
+    const buffer = new PosBuffer([]);
+    
+    buffer.write(Text, 'ユニコード');
+    expect(buffer).toBeHex('E383A6E3838BE382B3E383BCE38389');
+  });
+
+  it('can read other encodings', () => {
     const buffer = new PosBuffer([0xE3, 0x83, 0xA6, 0xE3, 0x83, 0x8B, 0xE3, 0x82, 0xB3, 0xE3, 0x83, 0xBC, 0xE3, 0x83, 0x89]);
 
     expect(buffer.read(Text, { size: 15, encoding: 'base64' })).toBe('44Om44OL44Kz44O844OJ');
   });
 
-  it('gives raw  hex as text when hex encoding used', () => {
+  it('can write other encodings', () => {
+    const buffer = new PosBuffer([]);
+
+    buffer.write(Text, '44Om44OL44Kz44O844OJ', { encoding: 'base64' });
+    expect(buffer).toBeHex('E383A6E3838BE382B3E383BCE38389');
+  });
+
+  it('gives raw hex as text when hex encoding used', () => {
     const buffer = new PosBuffer([0x36, 0x19, 0x24, 0x33, 0x12, 0x52, 0x10, 0x10]);
 
     expect(buffer.read(Text, { size: 8, encoding: 'hex' })).toBe('3619243312521010');
+  })
+
+  it('writes raw hex when hex encoding used', () => {
+    const buffer = new PosBuffer([]);
+
+    buffer.write(Text, '3619243312521010', { encoding: 'hex' })
+    expect(buffer).toBeHex('3619243312521010');
   })
 
   it('can specify a byte terminator', () => {
@@ -289,6 +325,13 @@ describe('Text', () => {
     expect(buffer.read(Int8)).toBe(50);
   });
 
+  it('can write a byte terminator', () => {
+    const buffer = new PosBuffer([]);
+
+    buffer.write(Text, 'bob', { terminator: 0x00 })
+    expect(buffer).toBeHex('626F6200');
+  });
+
   it('can specify a char terminator', () => {
     const buffer = new PosBuffer([0x62, 0x6f, 0x62, 0x3B, 0x32]);
 
@@ -296,6 +339,12 @@ describe('Text', () => {
     expect(buffer.read(Int8)).toBe(50);
   });
 
+  it('can write a char terminator', () => {
+    const buffer = new PosBuffer([]);
+
+    buffer.write(Text, 'bob', { terminator: ';' })
+    expect(buffer).toBeHex('626F623B');
+  });
 
   it('includes terminator in offset', () => {    
     const buffer = new PosBuffer([0x31, 0x00, 0x32, 0x00, 0x33, 0x00]);
@@ -330,14 +379,33 @@ describe('Bool', () => {
     expect(buffer.read(Bool)).toBe(true);
   })
 
+  it('writes a single bit, MSB first', () => {
+    const buffer = new PosBuffer([]);
+
+    buffer.write(Bool, true);
+
+    expect(buffer).toBeHex('80');
+  })
+
   it('can read multiple bools in a row', () => {
     const buffer = new PosBuffer([0xA0]);
 
     expect(buffer.read(Bool)).toBe(true);
     expect(buffer.read(Bool)).toBe(false);
     expect(buffer.read(Bool)).toBe(true);
-
   });
+
+  it('can write multiple bools in a row', () => {
+    const buffer = new PosBuffer([]);
+
+    buffer.write(Bool, true);
+    buffer.write(Bool, false);
+    buffer.write(Bool, true);
+    buffer.write(Bool, false);
+    buffer.write(Bool, true);
+
+    expect(buffer).toBeHex('A8');
+  })
 
   it('can read bools after reading bytes', () => {
     const buffer = new PosBuffer([0x01, 0x02, 0xA0]);
@@ -357,6 +425,14 @@ describe('Bit', () => {
     expect(buffer.read(Bit)).toBe(1);
   })
 
+  it('can write a single bit', () => {
+    const buffer = new PosBuffer([]);
+
+    buffer.write(Bit, 1);
+
+    expect(buffer).toBeHex('80');
+  })
+  
   it('can read multiple bits in a row', () => {
     const buffer = new PosBuffer([0xA0]);
 
@@ -364,6 +440,16 @@ describe('Bit', () => {
     expect(buffer.read(Bit)).toBe(0);
     expect(buffer.read(Bit)).toBe(1);
 
+  });
+
+  it('can write multiple bits in a row', () => {
+    const buffer = new PosBuffer([]);
+
+    buffer.write(Bit, 1);
+    buffer.write(Bit, 0);
+    buffer.write(Bit, 1);
+
+    expect(buffer).toBeHex('A0');
   });
 
   it('can read bits after reading bytes', () => {
@@ -400,6 +486,28 @@ describe('Bits', () => {
     buffer.pad();
     expect(buffer.read(UInt8)).toBe(255);
   });
+
+  it('can write bits', () => {
+    const buffer = new PosBuffer([]);
+
+    buffer.write(Bits2, 2);
+    buffer.write(Bits3, 4);
+    buffer.write(Bits4, 10);
+    buffer.write(Bits5, 12);
+    buffer.write(Bits6, 39);
+    buffer.write(Bits7, 126);
+    buffer.write(Bits8, 27);
+    buffer.write(Bits9, 378);
+    buffer.write(Bits10, 78);
+    buffer.write(Bits11, 1707);
+    buffer.write(Bits12, 4089);
+    buffer.write(Bits13, 2884);
+    buffer.write(Bits14, 12096);
+    buffer.write(Bits15, 30559);
+    buffer.write(Bits16, 42626);
+
+    expect(buffer).toBeHex('A5327FC377A13B55FFCAD12F40EEBF4D04');
+  });
 })
 
 describe('Chained operations', () => {
@@ -414,6 +522,21 @@ describe('Chained operations', () => {
     expect(buffer.read(UInt32)).toBe(2932098554);
     expect(buffer.read(Float)).toBe(3.141590118408203);
     expect(buffer.read(Double)).toBe(3.14150000000000018118839761883E0);
+  })
+
+  it('can write multiple values in succession', () => {
+    const buffer = new PosBuffer([]);
+    
+    buffer.write(UInt8, 255);
+    buffer.write(Int8, -1);
+    buffer.write(Int16, -20796);
+    buffer.write(UInt16, 44740);
+    buffer.write(Int32, -1362868742);
+    buffer.write(UInt32, 2932098554);
+    buffer.write(Float, 3.141590118408203);
+    buffer.write(Double, 3.14150000000000018118839761883E0);
+
+    expect(buffer).toBeHex('FFFFAEC4AEC4AEC445FAAEC445FA40490FD0400921CAC083126F');
   })
 })
 
@@ -431,6 +554,16 @@ describe('padding', () => {
     expect(buffer.read(Bool)).toBe(true);
     buffer.pad();
     expect(buffer.read(Int8)).toBe(2);
+  });
+
+  it('can be used to align to the byte boundary for writing', () => {    
+    const buffer = new PosBuffer([]);
+
+    buffer.write(Bool, true);
+    buffer.pad();
+    buffer.write(Int8, 2);
+
+    expect(buffer).toBeHex('8002');
   });
 
   it('throws an error if trying to read Int from a non-padded position', () => {
@@ -630,14 +763,4 @@ describe('Read many', () => {
       expect(value).toBe(i + 1);
     }
   })
-})
-
-describe('writing', () => {
-  const buffer = new PosBuffer([]);
-
-  buffer.write(UInt8, 8);
-  buffer.write(UInt16, 16);
-  buffer.write(UInt32, 32);
-
-  expect(buffer.toString('hex')).toBe('08001000000020');
 })
