@@ -1,6 +1,24 @@
 import { PosBuffer, Mode } from '../pos_buffer';
 import { UInt8, Int8, Int16, UInt16, Int32, UInt32, Float, Double, Text, Bool, Bit, Bits10, Bits11, Bits12, Bits13, Bits14, Bits15, Bits16, Bits2, Bits3, Bits4, Bits5, Bits6, Bits7, Bits8, Bits9 } from '../types';
 
+declare global {
+  namespace jest {
+    interface Matchers<R> {
+      toBeHex(expectedHex: string): R;
+    }
+  }
+}
+
+expect.extend({
+  toBeHex(received, expectedHex) {
+    const bufferAsHex = received.toString('hex').toUpperCase();
+
+    return bufferAsHex === expectedHex ? 
+      ({ pass: true, message: () => `Expected ${bufferAsHex} not to be ${expectedHex}`})
+      : ({ pass: false, message: () => `Expected ${bufferAsHex} to be ${expectedHex}` })
+  }
+})
+
 describe('Constructing a PosBuffer', () => {
   it('can take a Buffer in the constructor', () => {
     const buffer = new PosBuffer(Buffer.from([0xFF]));
@@ -15,16 +33,80 @@ describe('Numeric types', () => {
     expect(buffer.read(UInt8)).toBe(255);
   });
 
+  it('reads a UInt8 LE', () => {
+    const buffer = new PosBuffer([0xFF], { endianness: Mode.LE });
+
+    expect(buffer.read(UInt8)).toBe(255);
+  });
+
+  it('writes a UInt8', () => {
+    const buffer = new PosBuffer([]);
+
+    buffer.write(UInt8, 255);
+    expect(buffer).toBeHex('FF');
+  });
+
+  it('writes a UInt8 LE', () => {
+    const buffer = new PosBuffer([], { endianness: Mode.LE });
+
+    buffer.write(UInt8, 255);
+    expect(buffer).toBeHex('FF');
+  });
+
   it('reads a Int8', () => {
     const buffer = new PosBuffer([0xFF]);
 
     expect(buffer.read(Int8)).toBe(-1);
   });
 
-  it('reads an Int16', () => {
+  it('reads a Int8 LE', () => {
+    const buffer = new PosBuffer([0xFF], { endianness: Mode.LE });
+
+    expect(buffer.read(Int8)).toBe(-1);
+  });
+
+  it('writes a Int8', () => {
+    const buffer = new PosBuffer([]);
+
+    buffer.write(Int8, 127);
+    buffer.write(Int8, -1);
+    expect(buffer).toBeHex('7FFF');
+  });
+
+  it('writes a Int8 LE', () => {
+    const buffer = new PosBuffer([], { endianness: Mode.LE });
+
+    buffer.write(Int8, 127);
+    buffer.write(Int8, -1);
+    expect(buffer).toBeHex('7FFF');
+  });
+
+  it('reads an Int16 BE', () => {
     const buffer = new PosBuffer([0xAE, 0xC4]);
 
     expect(buffer.read(Int16)).toBe(-20796);
+  });
+
+  it('reads an Int16 LE', () => {
+    const buffer = new PosBuffer([0xC4, 0xAE], { endianness: Mode.LE });
+
+    expect(buffer.read(Int16)).toBe(-20796);
+  });
+
+  it('writes an Int16 BE', () => {
+    const buffer = new PosBuffer([]);
+
+    buffer.write(Int16, 15423);
+    buffer.write(Int16, 1);
+    expect(buffer).toBeHex('3C3F0001');
+  });
+
+  it('writes an Int16 LE', () => {
+    const buffer = new PosBuffer([], { endianness: Mode.LE });
+
+    buffer.write(Int16, 15423);
+    buffer.write(Int16, 1);
+    expect(buffer).toBeHex('3F3C0100');
   });
 
   it('reads a UInt16', () => {
@@ -33,16 +115,77 @@ describe('Numeric types', () => {
     expect(buffer.read(UInt16)).toBe(44740);
   });
 
-  it('reads an Int32', () => {
+  it('reads a UInt16 LE', () => {
+    const buffer = new PosBuffer([0xC4, 0xAE], { endianness: Mode.LE });
+
+    expect(buffer.read(UInt16)).toBe(44740);
+  });
+
+  it('writes an UInt16', () => {
+    const buffer = new PosBuffer([]);
+
+    buffer.write(UInt16, 48879);
+    expect(buffer).toBeHex('BEEF');
+  });
+
+  it('writes an UInt16 LE', () => {
+    const buffer = new PosBuffer([], { endianness: Mode.LE });
+
+    buffer.write(UInt16, 48879);
+    expect(buffer).toBeHex('EFBE');
+  });
+
+  it('reads an Int32 BE', () => {
     const buffer = new PosBuffer([0xAE, 0xC4, 0x45, 0xFA]);
 
     expect(buffer.read(Int32)).toBe(-1362868742);
   });
 
-  it('reads a UInt32', () => {
+  it('writes an Int32 BE', () => {
+    const buffer = new PosBuffer([]);
+
+    buffer.write(Int32, -1362868742);
+    expect(buffer).toBeHex('AEC445FA');
+  });
+
+  it('reads an Int32 LE', () => {
+    const buffer = new PosBuffer([0xFA, 0x45, 0xC4, 0xAE], { endianness: Mode.LE });
+
+    expect(buffer.read(Int32)).toBe(-1362868742);
+  });
+
+
+  it('writes an Int32 LE', () => {
+    const buffer = new PosBuffer([], { endianness: Mode.LE });
+
+    buffer.write(Int32, -1362868742);
+    expect(buffer).toBeHex('FA45C4AE');
+  });
+
+  it('reads a UInt32 BE', () => {
     const buffer = new PosBuffer([0xAE, 0xC4, 0x45, 0xFA]);
 
     expect(buffer.read(UInt32)).toBe(2932098554);
+  });
+
+  it('writes an UInt32 BE', () => {
+    const buffer = new PosBuffer([]);
+
+    buffer.write(UInt32, 2932098554);
+    expect(buffer).toBeHex('AEC445FA');
+  });
+
+  it('reads a UInt32 LE', () => {
+    const buffer = new PosBuffer([0xFA, 0x45, 0xC4, 0xAE], { endianness: Mode.LE });
+
+    expect(buffer.read(UInt32)).toBe(2932098554);
+  });
+
+  it('writes an UInt32 LE', () => {
+    const buffer = new PosBuffer([], { endianness: Mode.LE });
+
+    buffer.write(UInt32, 2932098554);
+    expect(buffer).toBeHex('FA45C4AE');
   });
 
   it('reads a signed float', () => {
@@ -51,10 +194,50 @@ describe('Numeric types', () => {
     expect(buffer.read(Float)).toBe(3.141590118408203);
   });
 
-  it('reads a signed double', () => {
+  it('writes a signed float BE', () => {
+    const buffer = new PosBuffer([]);
+    
+    buffer.write(Float, 3.141590118408203);
+    expect(buffer).toBeHex('40490FD0');
+  });
+
+  it('reads a signed float LE', () => {
+    const buffer = new PosBuffer([0xD0, 0x0F, 0x49, 0x40], { endianness: Mode.LE });
+    
+    expect(buffer.read(Float)).toBe(3.141590118408203);
+  });
+
+  it('writes a signed float LE', () => {
+    const buffer = new PosBuffer([], { endianness: Mode.LE });
+    
+    buffer.write(Float, 3.141590118408203);
+    expect(buffer).toBeHex('D00F4940');
+  });
+
+  it('reads a signed double BE', () => {
     const buffer = new PosBuffer([0x40, 0x09, 0x21, 0xCA, 0xC0, 0x83, 0x12, 0x6F]);
     
     expect(buffer.read(Double)).toBe(3.14150000000000018118839761883E0);
+  });
+
+  it('reads a signed double LE', () => {
+    const buffer = new PosBuffer([0x6F, 0x12, 0x83, 0xC0, 0xCA, 0x21, 0x09, 0x40], { endianness: Mode.LE });
+    
+    expect(buffer.read(Double)).toBe(3.14150000000000018118839761883E0);
+  });
+
+  it('writes a signed double BE', () => {
+    const buffer = new PosBuffer([]);
+    
+    buffer.write(Double, 3.14150000000000018118839761883E0);
+    expect(buffer).toBeHex('400921CAC083126F');
+  });
+
+  it('writes a signed double LE', () => {
+    const buffer = new PosBuffer([], { endianness: Mode.LE });
+    
+    buffer.write(Double, 3.14150000000000018118839761883E0);
+    expect(buffer).toBeHex('6F1283C0CA210940');
   });
 });
 
@@ -447,4 +630,14 @@ describe('Read many', () => {
       expect(value).toBe(i + 1);
     }
   })
+})
+
+describe('writing', () => {
+  const buffer = new PosBuffer([]);
+
+  buffer.write(UInt8, 8);
+  buffer.write(UInt16, 16);
+  buffer.write(UInt32, 32);
+
+  expect(buffer.toString('hex')).toBe('08001000000020');
 })

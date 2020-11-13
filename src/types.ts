@@ -6,12 +6,18 @@ export abstract class DataType {
 
   abstract execute(buffer: PosBuffer): number | string | boolean;
   abstract size: number;
+
+  public write(buffer: PosBuffer, value: number | string | boolean): Buffer {
+    return Buffer.from([]);
+  }
 }
 
 export abstract class NumericDataType extends DataType {
   abstract be: (offset: number) => any;
   abstract le: (offset: number) => any;
   abstract bitSize: () => number;
+  abstract writeBe: (value: number, offset: number) => number;
+  abstract writeLe: (value: number, offset: number) => number;
 
   public execute(buffer: PosBuffer): number {
     this.assertAtByteBoundary(buffer.offset);
@@ -19,6 +25,14 @@ export abstract class NumericDataType extends DataType {
     const boundFunction = valueFunction.bind(buffer.buffer);
     const value = boundFunction(buffer.offset.bytes);
     return value;
+  }
+
+  public write(buffer: PosBuffer, value: number): Buffer {
+    const tempBuffer = Buffer.alloc(this.bitSize() / 8);
+    const writeFunction = (buffer.mode === Mode.BE) ? this.writeBe : this.writeLe;
+    const boundFunction = writeFunction.bind(tempBuffer);
+    boundFunction(value, 0);
+    return tempBuffer;
   }
 
   private assertAtByteBoundary(offset: { bytes: number, bits: number}): void {
@@ -35,48 +49,64 @@ export abstract class NumericDataType extends DataType {
 export class UInt8 extends NumericDataType {
   public be = Buffer.prototype.readUInt8;
   public le = Buffer.prototype.readUInt8;
+  public writeBe = Buffer.prototype.writeUInt8;
+  public writeLe = Buffer.prototype.writeUInt8;
   public bitSize = () => 8;
 }
 
 export class Int8 extends NumericDataType {  
   public be = Buffer.prototype.readInt8;
   public le = Buffer.prototype.readInt8;
+  public writeBe = Buffer.prototype.writeInt8;
+  public writeLe = Buffer.prototype.writeInt8;
   public bitSize = () => 8;
 }
 
 export class UInt16 extends NumericDataType {
   public be = Buffer.prototype.readUInt16BE;
   public le = Buffer.prototype.readUInt16LE;
+  public writeBe = Buffer.prototype.writeUInt16BE;
+  public writeLe = Buffer.prototype.writeUInt16LE;
   public bitSize = () => 16;
 }
 
 export class Int16 extends NumericDataType {
   public be = Buffer.prototype.readInt16BE;
   public le = Buffer.prototype.readInt16LE;
+  public writeBe = Buffer.prototype.writeInt16BE;
+  public writeLe = Buffer.prototype.writeInt16LE;
   public bitSize = () => 16;
 }
 
 export class UInt32 extends NumericDataType {
   public be = Buffer.prototype.readUInt32BE;
   public le = Buffer.prototype.readUInt32LE;
+  public writeBe = Buffer.prototype.writeUInt32BE;
+  public writeLe = Buffer.prototype.writeUInt32LE;
   public bitSize = () => 32;
 }
 
 export class Int32 extends NumericDataType {
   public be = Buffer.prototype.readInt32BE;
   public le = Buffer.prototype.readInt32LE;
+  public writeBe = Buffer.prototype.writeInt32BE;
+  public writeLe = Buffer.prototype.writeInt32LE;
   public bitSize = () => 32;
 }
 
 export class Float extends NumericDataType {
   public be = Buffer.prototype.readFloatBE;
   public le = Buffer.prototype.readFloatLE;
+  public writeBe = Buffer.prototype.writeFloatBE;
+  public writeLe = Buffer.prototype.writeFloatLE;
   public bitSize = () => 32;
 }
 
 export class Double extends NumericDataType {
   public be = Buffer.prototype.readDoubleBE;
   public le = Buffer.prototype.readDoubleLE;
+  public writeBe = Buffer.prototype.writeDoubleBE;
+  public writeLe = Buffer.prototype.writeDoubleLE;
   public bitSize = () => 64;
 }
 

@@ -549,3 +549,19 @@ describe('tap', () => {
     expect(fieldOne).toBe(16);
   })
 })
+
+describe('writing', () => {
+  it('writes data', () => {
+    const data = {
+      one: 12,
+      two: 1024
+    }
+    const spec = new PayloadSpec()
+      .field('one', UInt8)
+      .field('two', UInt16)
+
+    const result = spec.write(data);
+
+    expect(result.toString('hex')).toBe("0c0400")
+  })
+})

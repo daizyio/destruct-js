@@ -22,7 +22,8 @@ export abstract class NamedValueProducer extends ValueProducer {
   }
 
   abstract execute(buffer: PosBuffer, readerState: ReaderState): Primitive | Array<any> | undefined;
-
+  public write(buffer: PosBuffer, value: Primitive): void {}
+  
   get name() {
     return this._name;
   }
@@ -43,6 +44,10 @@ export class Value extends NamedValueProducer {
     this.check(value);
     
     return value;
+  }
+
+  write(buffer: PosBuffer, value: Primitive): void {
+    buffer.write(this.Type, value);
   }
 
   public check(value: any): void {

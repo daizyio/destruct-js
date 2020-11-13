@@ -88,6 +88,14 @@ export class PayloadSpec {
   
     return reader.read(initialState);
   }
+
+  public write(data: any): Buffer {
+    const posBuffer = new PosBuffer([]);
+
+    const writer = new BufferWriter(posBuffer, this.instructions);
+
+    return writer.write(data);
+  }
 }
 
 class BufferReader {
@@ -120,6 +128,22 @@ class BufferReader {
   }
 }
 
+class BufferWriter {
+  constructor(private posBuffer: PosBuffer, private instructions: Instruction<any>[]) {
+  }
+  
+  public write(data: any): Buffer {
+    const result: {[k:string]: any} = {};
+
+    for(const instruction of this.instructions) {
+      if (instruction instanceof NamedValueProducer) {
+        instruction.write(this.posBuffer, data[instruction.name]);
+      }
+    }
+
+    return this.posBuffer.buffer;
+  }
+}
 export class ParsingError extends Error {
 
 }

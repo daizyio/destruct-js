@@ -9,6 +9,8 @@ export class PosBuffer {
   private offsetBytes: number = 0;
   private offsetBits: number = 0;
 
+  private writeBuffers: [buffer: Buffer, offset: number][] = [];
+
   constructor(bytes: Buffer | number[], private options: BufferOptions = {}) {
     this._buffer = Buffer.from(bytes);
     this.offsetBytes = options?.offset?.bytes || 0;
@@ -35,6 +37,15 @@ export class PosBuffer {
 
     this.updateOffset(dataInstruction.size);
     return thennedValue;
+  }
+
+  public write(dataType: DataTypeCtor, value: string | number | boolean): Buffer {
+    const dataInstruction = new dataType();
+    const newBuffer = dataInstruction.write(this, value);
+
+    this.updateOffset(dataInstruction.size);
+    this.writeBuffers.push([newBuffer, this.offsetBytes]);
+    return newBuffer;
   }
 
   public readMany(dataTypes: { type: DataTypeCtor, options?: TypeOptions }[]): (string | number | boolean | undefined)[] {
@@ -78,7 +89,7 @@ export class PosBuffer {
   }
 
   public toString(encoding?: Encoding, start?: number, end?: number): string {
-    return this._buffer.toString(encoding, start, end);
+    return this.buffer.toString(encoding, start, end);
   }
 
   get mode(): Mode {
@@ -94,6 +105,9 @@ export class PosBuffer {
   }
 
   get buffer(): Buffer {
+    if (this._buffer.length == 0 && this.writeBuffers.length > 0) {
+      this._buffer = Buffer.concat(this.writeBuffers.map((wb) => wb[0]))
+    }
     return this._buffer;
   }
 
