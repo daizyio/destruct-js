@@ -621,6 +621,16 @@ describe('Skipping', () => {
     expect(buffer.read(UInt16)).toBe(50483);
   })
 
+  it('can skip while writing', () => {
+    const buffer = new PosBuffer([]);
+
+    buffer.write(UInt16, 44740);
+    buffer.skip(1);
+    buffer.write(UInt16, 50483);
+
+    expect(buffer).toBeHex('AEC400C533');
+  })
+
   it('can be chained', () => {
     const buffer = new PosBuffer([0xAE, 0xC4, 0x00, 0xC5, 0x33]);
 
