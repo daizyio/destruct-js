@@ -158,7 +158,7 @@ expect(result.numericText).toBe(123);
 expect(result.temperature).toBe(100);
 ```
 
-`shouldBe: (string | number | boolean)` - All data types support a `shouldBe` option, that can be used to assert that a particular value should be fixed.  For example, you might use this to check that a particular delimiter is present.  If the value read from the buffer does not match the expected value, a `ParsingError` will be thrown.
+`shouldBe: (string | number | boolean)` - All data types support a `shouldBe` option, that can be used to assert that a particular value should be fixed.  For example, you might use this to check that a particular delimiter is present.  If the value read from the buffer does not match the expected value, an `Error` will be thrown.
 
 ```
 const result = 

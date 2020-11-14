@@ -28,6 +28,7 @@ export abstract class NumericDataType extends DataType {
   }
 
   public write(buffer: PosBuffer, value: number): Buffer {
+    this.assertAtByteBoundary(buffer.offset);
     const tempBuffer = Buffer.alloc(this.bitSize() / 8);
     const writeFunction = (buffer.mode === Mode.BE) ? this.writeBe : this.writeLe;
     const boundFunction = writeFunction.bind(tempBuffer);

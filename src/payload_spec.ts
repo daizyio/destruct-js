@@ -146,9 +146,6 @@ class BufferWriter {
     return this.posBuffer.buffer;
   }
 }
-export class ParsingError extends Error {
-
-}
 
 export interface ParsingOptions {
   mode?: Mode;

@@ -1,4 +1,4 @@
-import { PosBuffer, ReaderState, FieldOptions, DataTypeCtor, ParsingError, Mode, PayloadSpec } from '.';
+import { PosBuffer, ReaderState, FieldOptions, DataTypeCtor, Mode, PayloadSpec } from '.';
 
 export type Predicate = (r: any) => boolean;
 export type ValueProvider = (r: any) => Primitive;
@@ -14,6 +14,7 @@ export abstract class ValueProducer implements Instruction<Primitive | Array<any
   }
 
   abstract execute(buffer: PosBuffer, readerState: ReaderState): Primitive | Array<any> | undefined;
+  abstract write(buffer: PosBuffer, value: Primitive): void;
 }
 // ======
 export abstract class NamedValueProducer extends ValueProducer {
@@ -23,7 +24,7 @@ export abstract class NamedValueProducer extends ValueProducer {
 
   abstract execute(buffer: PosBuffer, readerState: ReaderState): Primitive | Array<any> | undefined;
   public write(buffer: PosBuffer, value: Primitive): void {}
-  
+
   get name() {
     return this._name;
   }
@@ -52,7 +53,7 @@ export class Value extends NamedValueProducer {
 
   public check(value: any): void {
     if (this._shouldBe != null && value != this._shouldBe) {
-      throw new ParsingError(`Expected ${this.name} to be ${this._shouldBe} but was ${value}`);
+      throw new Error(`Expected ${this.name} to be ${this._shouldBe} but was ${value}`);
     }
   }
 }
@@ -94,6 +95,8 @@ export class IfInstruction extends ValueProducer {
       return this.otherSpec.exec(buffer, readerState);
     }
   }
+
+  public write(buffer: PosBuffer, value: Primitive): void {}
 }
 // ======
 export class LookupInstruction extends ValueProducer {
@@ -112,6 +115,8 @@ export class LookupInstruction extends ValueProducer {
       return otherSpec.exec(buffer);
     }
   }
+  
+  public write(buffer: PosBuffer, value: Primitive): void {}
 }
 // ======
 export class LoopInstruction extends NamedValueProducer {

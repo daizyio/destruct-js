@@ -1,6 +1,7 @@
-import { PayloadSpec, ParsingError } from '../payload_spec';
+import { PayloadSpec } from '../payload_spec';
 import { Mode } from '../pos_buffer';
 import { UInt8, Int8, UInt16, Float, UInt32, Text, Bit, Bool, Bits3, Bits5, Bits2, Bits8 } from '../types';
+import './matchers';
 
 describe('Simple fields', () => {
   it('reads fields in order from the buffer', () => {
@@ -15,6 +16,18 @@ describe('Simple fields', () => {
     expect(result.count).toBe(255);
     expect(result.temp).toBe(2);
     expect(result.pi).toBe(3.141590118408203);
+  });
+  
+  it('writes fields in order to the buffer', () => {
+    const spec = new PayloadSpec();
+
+    spec.field('count', UInt8)
+        .field('temp', UInt8)
+        .field('pi', Float);
+
+    const result = spec.write({ count: 255, temp: 2, pi: 3.141590118408203});
+
+    expect(result).toBeHex('FF0240490FD0');
   });
 
   it('can use lenient mode to stop parsing when buffer ends', () => {
@@ -75,12 +88,25 @@ describe('skip', () => {
         
     expect(() => spec.exec(Buffer.from([0x16, 0x00, 0x7F, 0x00, 0x00, 0x00, 0x01]))).not.toThrowError();
   });
+
+  it('supports skip when writing', () => {
+    const spec = new PayloadSpec();
+    
+    spec.field('count', UInt8)
+        .skip(1)
+        .field('temp', UInt8)
+        .skip(3)
+        .field('humidity', UInt8);
+
+    const result = spec.write({ count: 22, temp: 127, humidity: 1});
+
+    expect(result).toBeHex('16007F00000001');
+  });
 });
 
 describe('endianness', () => {
   it('can switch enddianness', () => {
-    const result = 
-      new PayloadSpec({ mode: Mode.BE })
+    const result = new PayloadSpec({ mode: Mode.BE })
         .field('countBE', UInt16)
           .endianness(Mode.LE)
         .field('countLE', UInt16)
@@ -90,6 +116,17 @@ describe('endianness', () => {
     expect(result.countBE).toBe(65328);
     expect(result.countLE).toBe(65328);
   });
+
+  it('can switch endianness when writing', () => {
+    const result = new PayloadSpec({ mode: Mode.BE })
+      .field('countBE', UInt16)
+        .endianness(Mode.LE)
+      .field('countLE', UInt16)
+        .endianness(Mode.BE)
+      .write({ countBE: 65328, countLE: 65328 })
+  
+    expect(result).toBeHex('FF3030FF');
+  })
 });
 
 describe('storing a field', () => {
@@ -115,6 +152,17 @@ describe('storing a field', () => {
     expect(result.ignoreMe).toBeUndefined();
     expect(result.andMe).toBeUndefined();
     expect(result.lastByte).toBe(1);
+  })
+
+  it('writes stored fields', () => {
+    const result =
+    new PayloadSpec()
+      .store('ignoreMe', UInt8)
+      .store('andMe', UInt32)
+      .field('lastByte', UInt8)
+      .write({ ignoreMe: 255, andMe: 4294967295, lastByte: 1 })
+    
+    expect(result).toBeHex('FFFFFFFFFF01');
   })
 })
 
@@ -160,6 +208,17 @@ describe('deriving a field', () => {
 
     expect(result.total).toBe(8);
   })
+
+  it('ignores derived fields when writing', () => {
+    const result =
+      new PayloadSpec()
+        .field('count', UInt8)
+        .store('factor', UInt8)
+        .derive('total', (r) => r.count * r.factor)
+        .write({ count: 2, factor: 4, total: 8 });
+
+    expect(result).toBeHex('0204');
+  })
 })
 
 describe('padding', () => {
@@ -174,16 +233,26 @@ describe('padding', () => {
     expect(result.count).toBe(2);
   });
 
-  it('throws an error if trying to read Int from a non-padded position', () => {
+  it('aligns to the byte boundary when writing', () => {
+    const result =
+      new PayloadSpec()
+        .field('enabled', Bool).pad()
+        .field('count', Int8)
+        .write({ enabled: true, count: 2 })
+    
+    expect(result).toBeHex('8002');
+  });
+
+  it('throws an error if trying to write Int from a non-padded position', () => {
     const spec = 
       new PayloadSpec()
         .field('enabled', Bool)
         .field('count', Int8)
-      
-    expect(() => spec.exec(Buffer.from([0x80, 0x02]))).toThrowError(new ParsingError('Buffer position is not at a byte boundary (bit offset 1). Do you need to use pad()?'))
+    
+    expect(() => spec.write({ enabled: true, count: 2 })).toThrowError(new Error('Buffer position is not at a byte boundary (bit offset 1). Do you need to use pad()?'));
   })
 
-  it('does not error if previous bits add up to byte boundary', () => {
+  it('does not error if previous bits add up to byte boundary when reading', () => {
     const spec = 
       new PayloadSpec()
         .field('enabled', Bool)
@@ -191,7 +260,18 @@ describe('padding', () => {
         .field('frequency', Bits2)
         .field('count', Int8)
       
-    expect(() => spec.exec(Buffer.from([0x80, 0x02]))).not.toThrowError(new ParsingError('Buffer position is not at a byte boundary (bit offset 0). Do you need to use pad()?'))
+    expect(() => spec.exec(Buffer.from([0x80, 0x02]))).not.toThrowError(new Error('Buffer position is not at a byte boundary (bit offset 0). Do you need to use pad()?'))
+  })
+
+  it('does not error if previous bits add up to byte boundary when writing', () => {
+    const spec = 
+      new PayloadSpec()
+        .field('enabled', Bool)
+        .field('days', Bits5)
+        .field('frequency', Bits2)
+        .field('count', Int8)
+      
+    expect(() => spec.write({ enabled: true, days: 12, frequency: 2, count: 36 })).not.toThrowError(new Error('Buffer position is not at a byte boundary (bit offset 0). Do you need to use pad()?'))
   })
 })
 
@@ -215,6 +295,26 @@ describe('if', () => {
 
     expect(result2.type).toBe(0);
     expect(result2.a1).toBeUndefined();
+  })
+
+
+  xit('evaluates conditional block when writing', () => {
+    const messageType1 = 
+      new PayloadSpec()
+        .field('a1', UInt8)
+
+    const mainSpec = 
+      new PayloadSpec()
+        .field('type', UInt8)
+        .if((r) => r.type === 1, messageType1)
+
+    const result1 = mainSpec.write({ type: 1, a1: 2 })
+
+    expect(result1).toBeHex('0102');
+
+    const result2 = mainSpec.write({ type: 0 })
+
+    expect(result2).toBeHex('00');
   })
 
   it('can accept PayloadSpec created inline', () => {
@@ -322,7 +422,7 @@ describe('should be', () => {
       new PayloadSpec()
         .field('frequency', UInt8, { shouldBe: 3 })
 
-    expect(() => spec.exec(Buffer.from([0x04]))).toThrowError(new ParsingError('Expected frequency to be 3 but was 4'));
+    expect(() => spec.exec(Buffer.from([0x04]))).toThrowError(new Error('Expected frequency to be 3 but was 4'));
   });
 
   it('still works if the expected value is falsy', () => {
@@ -330,7 +430,7 @@ describe('should be', () => {
       new PayloadSpec()
         .field('frequency', UInt8, { shouldBe: 0 })
 
-    expect(() => spec.exec(Buffer.from([0x01]))).toThrowError(new ParsingError('Expected frequency to be 0 but was 1'));
+    expect(() => spec.exec(Buffer.from([0x01]))).toThrowError(new Error('Expected frequency to be 0 but was 1'));
   });
 
   it('works for text', () => {
@@ -338,7 +438,7 @@ describe('should be', () => {
       new PayloadSpec()
         .field('name', Text, { size: 3, shouldBe: 'bob' })
 
-    expect(() => spec.exec(Buffer.from([0x6e, 0x65, 0x64]))).toThrowError(new ParsingError('Expected name to be bob but was ned'));
+    expect(() => spec.exec(Buffer.from([0x6e, 0x65, 0x64]))).toThrowError(new Error('Expected name to be bob but was ned'));
   })
 
   it('works for bits', () => {
@@ -346,7 +446,7 @@ describe('should be', () => {
       new PayloadSpec()
         .field('bits', Bits3, { shouldBe: 4 })
       
-    expect(() => spec.exec(Buffer.from([0x00]))).toThrowError(new ParsingError('Expected bits to be 4 but was 0'));
+    expect(() => spec.exec(Buffer.from([0x00]))).toThrowError(new Error('Expected bits to be 4 but was 0'));
   })
 });
 
@@ -575,5 +675,18 @@ describe('writing', () => {
     const result = spec.write(data);
 
     expect(result.toString('hex').toUpperCase()).toBe("0C040000D04048F5C3")
+  })
+
+  it('writes zeroes if relevant data not found in the input', () => {
+    const data = { mid: 3 };
+
+    const spec = new PayloadSpec()
+      .field('start', UInt16)
+      .field('mid', UInt8)
+      .field('end', UInt32)
+
+    const result = spec.write(data);
+
+    expect(result).toBeHex('00000300000000');
   })
 })
