@@ -1,5 +1,5 @@
 import { Instruction, Primitive, Value, Literal, Calculation, SkipInstruction, IfInstruction, LookupInstruction, PadInstruction, EndiannessInstruction, ValueProducer, Predicate, ValueProvider, LoopInstruction, NamedValueProducer, TapInstruction } from './instructions';
-import { PosBuffer, DataTypeCtor, Encoding, Mode, NumericTypeCtor } from './pos_buffer';
+import { PosBuffer, DataTypeCtor, Encoding, Mode, NumericTypeCtor } from '../pos_buffer/pos_buffer';
 
 export interface FieldOptions {
   terminator?: string | number;

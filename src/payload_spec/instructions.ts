@@ -1,4 +1,4 @@
-import { PosBuffer, ReaderState, FieldOptions, DataTypeCtor, Mode, PayloadSpec } from '.';
+import { PosBuffer, ReaderState, FieldOptions, DataTypeCtor, Mode, PayloadSpec } from '..';
 
 export type Predicate = (r: any) => boolean;
 export type ValueProvider = (r: any) => Primitive;

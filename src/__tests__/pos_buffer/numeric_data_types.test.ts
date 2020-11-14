@@ -1,6 +1,6 @@
-import { PayloadSpec } from '../payload_spec';
-import { Mode } from '../pos_buffer';
-import { UInt8, Int8, UInt16, Int16, UInt32, Int32, Float, Double } from '../types';
+import { PayloadSpec } from '../../payload_spec/payload_spec';
+import { Mode } from '../../pos_buffer/pos_buffer';
+import { UInt8, Int8, UInt16, Int16, UInt32, Int32, Float, Double } from '../../pos_buffer/types';
 
 describe('UInt8', () => {
   it('reads a single unsigned int', () => {

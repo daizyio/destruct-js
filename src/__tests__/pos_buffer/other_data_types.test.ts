@@ -1,5 +1,5 @@
-import { PayloadSpec } from '../payload_spec'
-import { Text, Int8, Int16, UInt8, Bit, Bits2, Bits3, Bits4, Bits5, Bits6, Bits7, Bool, Bits8, Bits9, Bits10, Bits11, Bits12, Bits13, Bits14, Bits15, Bits16 } from '../types';
+import { PayloadSpec } from '../../payload_spec/payload_spec'
+import { Text, Int8, Int16, UInt8, Bit, Bits2, Bits3, Bits4, Bits5, Bits6, Bits7, Bool, Bits8, Bits9, Bits10, Bits11, Bits12, Bits13, Bits14, Bits15, Bits16 } from '../../pos_buffer/types';
 
 describe('Text', () => {
   it('reads text as ascii', () => {

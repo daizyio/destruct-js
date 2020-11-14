@@ -1,7 +1,7 @@
-import { PayloadSpec } from '../payload_spec';
-import { Mode } from '../pos_buffer';
-import { UInt8, Int8, UInt16, Float, UInt32, Text, Bit, Bool, Bits3, Bits5, Bits2, Bits8 } from '../types';
-import './matchers';
+import { PayloadSpec } from '../../payload_spec/payload_spec';
+import { Mode } from '../../pos_buffer/pos_buffer';
+import { UInt8, Int8, UInt16, Float, UInt32, Text, Bit, Bool, Bits3, Bits5, Bits2, Bits8 } from '../../pos_buffer/types';
+import '../matchers';
 
 describe('Simple fields', () => {
   it('reads fields in order from the buffer', () => {

@@ -1,5 +1,5 @@
-import { DataType, NumericDataType } from '.';
-import { Primitive } from './instructions';
+import { DataType, NumericDataType } from '..';
+import { Primitive } from '../payload_spec/instructions';
 
 export type DataTypeCtor = new (options?: TypeOptions) => DataType;
 export type NumericTypeCtor = new (options?: TypeOptions) => NumericDataType;
