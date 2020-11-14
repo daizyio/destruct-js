@@ -50,6 +50,8 @@ export class Value extends NamedValueProducer {
 
   write(buffer: PosBuffer, readerState: ReaderState): void {
     const value = readerState.result[this._name];
+    this.check(value);
+
     buffer.write(this.Type, value);
   }
 
@@ -124,7 +126,17 @@ export class LookupInstruction extends ValueProducer {
     }
   }
   
-  public write(buffer: PosBuffer, readerState: ReaderState): void {}
+  public write(buffer: PosBuffer, readerState: ReaderState): void {
+    const value = this.valueProvider({ ...readerState.result, ...readerState.storedVars });
+
+    if (value == null) return;
+
+    const otherSpec = this.valueMap[value.toString()] ?? this.valueMap['default'];
+
+    if (otherSpec) {
+      otherSpec.write(readerState.result, buffer);
+    }
+  }
 }
 // ======
 export class LoopInstruction extends NamedValueProducer {
@@ -132,16 +144,34 @@ export class LoopInstruction extends NamedValueProducer {
     super(_name, {});
   }
 
-  execute(buffer: PosBuffer, readerState: ReaderState): Array<any> {
+  public execute(buffer: PosBuffer, readerState: ReaderState): Array<any> {
     const repetitions = typeof this.repeat === 'number' ? this.repeat : this.repeat({ ...readerState.result, ...readerState.storedVars })
 
     if (typeof repetitions !== 'number' || !Number.isInteger(repetitions)) {
       throw new Error('Loop count must be an integer');
-    } 
+    }
 
     return Array(repetitions).fill(null).map(n => {
       const tempState = JSON.parse(JSON.stringify(readerState));
       return this.loopSpec.exec(buffer, tempState)
+    });
+  }
+
+  public write(buffer: PosBuffer, readerState: ReaderState): void {
+    const repetitions = typeof this.repeat === 'number' ? this.repeat : this.repeat({ ...readerState.result, ...readerState.storedVars })
+
+    if (typeof repetitions !== 'number' || !Number.isInteger(repetitions)) {
+      throw new Error('Loop count must be an integer');
+    }
+
+    Array(repetitions).fill(null).map((n, i) => {
+      const value: any = readerState.result[this._name];
+      const nextContext = Array.isArray(value) ? value[i] : value;
+
+      if (!nextContext) return;
+      
+      const tempState = JSON.parse(JSON.stringify(nextContext));
+      this.loopSpec.write(tempState, buffer)
     });
   }
 

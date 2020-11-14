@@ -374,6 +374,17 @@ describe('literal value', () => {
     expect(data.type).toBe('install');
   });
 
+  it('ignores literals when writing', () => {
+    const spec = 
+      new PayloadSpec()
+        .field('type', 'install')
+        .field('one', UInt8)
+
+    const data = spec.write({ type: 'install', one: 1 });
+
+    expect(data).toBeHex('01');
+  });
+
   it('puts a literal number in the output', () => {
     const spec = 
       new PayloadSpec()
@@ -463,6 +474,17 @@ describe('should be', () => {
       
     expect(() => spec.exec(Buffer.from([0x00]))).toThrowError(new Error('Expected bits to be 4 but was 0'));
   })
+
+  it('validates when writing', () => {
+    const spec =
+      new PayloadSpec()
+        .field('enabled', Bool, { shouldBe: true })
+        .field('days', Bits3, { shouldBe: 5 })
+        .pad()
+        .field('frequency', UInt8, { shouldBe: 3 })
+
+    expect(() => spec.write({ enabled: true, days: 5, frequency: 4})).toThrowError(new Error('Expected frequency to be 3 but was 4'));
+  });
 });
 
 describe('switch', () => {
@@ -496,6 +518,33 @@ describe('switch', () => {
     expect(result2.one).toBeUndefined();
     expect(result2.two).toBe(2);
 
+  });
+
+  it('looks up a spec during writes', () => {
+    const specOne = 
+      new PayloadSpec()
+        .field('one', UInt8)
+
+    const specTwo =
+      new PayloadSpec()
+        .skip(1)
+        .field('two', UInt8)
+
+    const mainSpec =
+      new PayloadSpec()
+        .field('type', UInt8)
+        .switch((r) => r.type, {
+          '128': specOne,
+          '0': specTwo
+        });
+
+    const result = mainSpec.write({ type: 128, one: 1 });
+
+    expect(result).toBeHex('8001');
+
+    const result2 = mainSpec.write({ type: 0, one: 1, two: 2 });
+
+    expect(result2).toBeHex('000002');
   });
 
   it('uses the default option if the lookup does not succeed', () => {
@@ -543,6 +592,19 @@ describe('loop', () => {
     expect(result.nest[1].val2).toBe(254);
     expect(result.nest[2].val1).toBe(3);
     expect(result.nest[2].val2).toBe(253);
+  })
+
+  it('reads sub-spec from nested properties when writing', () => {
+    const loopSpec = 
+      new PayloadSpec()
+        .loop('nest', 3, new PayloadSpec()
+          .field('val1', UInt8)
+          .field('val2', UInt8)
+        )
+
+    const result = loopSpec.write({ nest: [ { val1: 1, val2: 255 }, { val1: 2, val2: 254 }, { val1: 3, val2: 253 }]});
+
+    expect(result).toBeHex('01FF02FE03FD')
   })
 
   it('does not duplicate values in nested specs', () => {
@@ -647,6 +709,20 @@ describe('loop', () => {
     expect(result.level1[1].level2[1].l2Value).toBe(17);
     expect(result.level1[1].level2[2].l2Value).toBe(18);
   })
+
+  it('can write multiple nesting', () => {
+    const loopSpec = 
+      new PayloadSpec()
+        .loop('level1', 2, new PayloadSpec()
+          .field('l1Size', UInt8)
+          .loop('level2', (r) => r.l1Size, new PayloadSpec()
+            .field('l2Value', UInt8))
+        )
+
+    const result = loopSpec.write({ level1: [ { l1Size: 2, level2: [ { l2Value: 255 }, { l2Value: 254 }] }, { l1Size: 3, level2: [ { l2Value: 16 }, { l2Value: 17 }, { l2Value: 18 }]}]});
+
+    expect(result).toBeHex('02FFFE03101112');
+  })
 })
 
 describe('tap', () => {
@@ -663,6 +739,18 @@ describe('tap', () => {
     expect(result.one).toBe(16)
     expect(fieldOne).toBe(16);
   })
+
+  it('can be tapped while writing', () => {
+    const tappedSpec = 
+      new PayloadSpec()
+        .field('one', UInt8)
+        .tap((buffer, readerState) => buffer.write(UInt8, 255))
+        .field('two', UInt8)
+
+    const result = tappedSpec.write({ one: 16, two: 1 })
+
+    expect(result).toBeHex('10FF01');
+  });
 })
 
 describe('writing', () => {
