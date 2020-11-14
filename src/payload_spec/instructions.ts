@@ -6,6 +6,7 @@ export type Primitive = number | string | boolean;
 
 export interface Instruction<T> {
   execute(buffer: PosBuffer, readerState: ReaderState): T | undefined;
+  write(buffer: PosBuffer, readerState: ReaderState): void;
 }
 // ======
 export abstract class ValueProducer implements Instruction<Primitive | Array<any>> {
@@ -14,7 +15,7 @@ export abstract class ValueProducer implements Instruction<Primitive | Array<any
   }
 
   abstract execute(buffer: PosBuffer, readerState: ReaderState): Primitive | Array<any> | undefined;
-  abstract write(buffer: PosBuffer, value: Primitive): void;
+  abstract write(buffer: PosBuffer, readerState: ReaderState): void;
 }
 // ======
 export abstract class NamedValueProducer extends ValueProducer {
@@ -23,7 +24,7 @@ export abstract class NamedValueProducer extends ValueProducer {
   }
 
   abstract execute(buffer: PosBuffer, readerState: ReaderState): Primitive | Array<any> | undefined;
-  public write(buffer: PosBuffer, value: Primitive): void {}
+  public write(buffer: PosBuffer, readerState: ReaderState): void {}
 
   get name() {
     return this._name;
@@ -47,7 +48,8 @@ export class Value extends NamedValueProducer {
     return value;
   }
 
-  write(buffer: PosBuffer, value: Primitive): void {
+  write(buffer: PosBuffer, readerState: ReaderState): void {
+    const value = readerState.result[this._name];
     buffer.write(this.Type, value);
   }
 
@@ -96,7 +98,13 @@ export class IfInstruction extends ValueProducer {
     }
   }
 
-  public write(buffer: PosBuffer, value: Primitive): void {}
+  public write(buffer: PosBuffer, readerState: ReaderState): void {
+    const shouldExec = this.predicate({ ...readerState.result, ...readerState.storedVars });
+
+    if (shouldExec) {
+      this.otherSpec.write(readerState.result, buffer);
+    }
+  }
 }
 // ======
 export class LookupInstruction extends ValueProducer {
@@ -116,7 +124,7 @@ export class LookupInstruction extends ValueProducer {
     }
   }
   
-  public write(buffer: PosBuffer, value: Primitive): void {}
+  public write(buffer: PosBuffer, readerState: ReaderState): void {}
 }
 // ======
 export class LoopInstruction extends NamedValueProducer {
@@ -146,7 +154,11 @@ export class LoopInstruction extends NamedValueProducer {
 
 abstract class NullInstruction implements Instruction<void> {
   abstract execute(buffer: PosBuffer, readerState: ReaderState): void
+  write(buffer: PosBuffer, readerState: ReaderState): void {
+    this.execute(buffer, readerState);
+  }
 }
+
 // ======
 export class SkipInstruction extends NullInstruction {
 

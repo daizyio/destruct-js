@@ -298,7 +298,7 @@ describe('if', () => {
   })
 
 
-  xit('evaluates conditional block when writing', () => {
+  it('evaluates conditional block when writing', () => {
     const messageType1 = 
       new PayloadSpec()
         .field('a1', UInt8)
@@ -346,6 +346,21 @@ describe('if', () => {
     expect(result1.type).toBe(5);
     expect(result1.a1).toBe(14);
   })
+
+  it('maintains a bit offset when writing', () => {
+
+    const mainSpec =
+      new PayloadSpec()
+        .field('type', Bits3)
+        .if((r) => true, new PayloadSpec()
+          .field('a1', Bits8)
+        )
+        .field('last', Bits5)
+
+    const result = mainSpec.write({ type: 5, a1: 14, last: 18 });
+
+    expect(result).toBeHex('A1D2');
+  });  
 })
 
 describe('literal value', () => {

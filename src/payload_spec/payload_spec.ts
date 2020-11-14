@@ -89,8 +89,8 @@ export class PayloadSpec {
     return reader.read(initialState);
   }
 
-  public write(data: any): Buffer {
-    const posBuffer = new PosBuffer([]);
+  public write(data: any, initialBuffer?: PosBuffer): Buffer {
+    const posBuffer = initialBuffer || new PosBuffer([]);
 
     const writer = new BufferWriter(posBuffer, this.instructions);
 
@@ -129,21 +129,15 @@ class BufferReader {
 }
 
 class BufferWriter {
-  constructor(private posBuffer: PosBuffer, private instructions: Instruction<any>[]) {
-  }
+  constructor(private posBuffer: PosBuffer, private instructions: Instruction<any>[]) { }
   
   public write(data: any): Buffer {
-    const result: {[k:string]: any} = {};
-
     for(const instruction of this.instructions) {
-      if (instruction instanceof NamedValueProducer) {
-        instruction.write(this.posBuffer, data[instruction.name]);
-      } else {
-        instruction.execute(this.posBuffer, { result: data, storedVars: {}});
-      }
+      instruction.write(this.posBuffer, { result: data, storedVars: {} });
     }
 
-    return this.posBuffer.buffer;
+    const buffer = this.posBuffer.buffer;
+    return buffer;
   }
 }
 

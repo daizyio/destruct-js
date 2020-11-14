@@ -81,7 +81,7 @@ export class PosBuffer {
 
   public pad(): PosBuffer {
     if (this.offsetBits != 0) {
-      this.finaliseBitBuffer();
+      this.pushBitBuffer();
       this.offsetBytes += 1;
       this.offsetBits = 0;
     }
@@ -110,14 +110,13 @@ export class PosBuffer {
   }
 
   get buffer(): Buffer {
-    if (this.offsetBits != 0) {
-      this.finaliseBitBuffer();
-    }
+    const bitBuffer = this.offsetBits != 0 ? Buffer.from([this.writeBitBuffer]) : Buffer.alloc(0);
 
     if (this._buffer.length == 0 && this.writeBuffers.length > 0) {
-      this._buffer = Buffer.concat(this.writeBuffers.map((wb) => wb[0]))
+      return Buffer.concat(this.writeBuffers.map((wb) => wb[0]).concat([bitBuffer]))
+    } else {
+      return this._buffer;
     }
-    return this._buffer;
   }
 
   get offset(): { bytes: number, bits: number } {
@@ -135,12 +134,11 @@ export class PosBuffer {
   public flipBits(bitPos: number, value: number) {
     this.writeBitBuffer = this.writeBitBuffer | (value << (7 - bitPos))
     if (bitPos == 7) {
-      this.finaliseBitBuffer();
-      this.offsetBytes += 1;
+      this.pushBitBuffer();
     }
   }
 
-  private finaliseBitBuffer() {
+  private pushBitBuffer() {
     this.writeBuffers.push([Buffer.from([this.writeBitBuffer]), this.offset.bytes])
     this.writeBitBuffer = 0;
   }
