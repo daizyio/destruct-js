@@ -138,6 +138,8 @@ class BufferWriter {
     for(const instruction of this.instructions) {
       if (instruction instanceof NamedValueProducer) {
         instruction.write(this.posBuffer, data[instruction.name]);
+      } else {
+        instruction.execute(this.posBuffer, { result: data, storedVars: {}});
       }
     }
 

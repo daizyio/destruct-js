@@ -554,14 +554,26 @@ describe('writing', () => {
   it('writes data', () => {
     const data = {
       one: 12,
-      two: 1024
+      two: 1024,
+      flag: true,
+      bit1: 1,
+      bit2: 0,
+      bit3: 1,
+      fl: 3.14
     }
     const spec = new PayloadSpec()
       .field('one', UInt8)
       .field('two', UInt16)
+      .skip(1)
+      .field('flag', Bool)
+      .field('bit1', Bit)
+      .field('bit2', Bit)
+      .field('bit3', Bit)
+      .pad()
+      .field('fl', Float)
 
     const result = spec.write(data);
 
-    expect(result.toString('hex')).toBe("0c0400")
+    expect(result.toString('hex').toUpperCase()).toBe("0C040000D04048F5C3")
   })
 })
