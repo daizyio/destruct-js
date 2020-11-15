@@ -1,10 +1,10 @@
-import { PayloadSpec } from '../../payload_spec/payload_spec';
+import { Spec } from '../../payload_spec/payload_spec';
 import { Mode } from '../../pos_buffer/pos_buffer';
 import { UInt8, Int8, UInt16, Int16, UInt32, Int32, Float, Double } from '../../pos_buffer/types';
 
 describe('UInt8', () => {
   it('reads a single unsigned int', () => {
-    const spec = new PayloadSpec();
+    const spec = new Spec();
   
     spec.field('count', UInt8);
   
@@ -14,7 +14,7 @@ describe('UInt8', () => {
   })
   
   it('has bitSize of 8', () => {
-    const spec = new PayloadSpec();
+    const spec = new Spec();
   
     spec.field('count', UInt8)
         .field('temp', UInt8)
@@ -28,7 +28,7 @@ describe('UInt8', () => {
   })
 
   it('ignores endianness', () => {
-    const spec = new PayloadSpec({ mode: Mode.LE });
+    const spec = new Spec({ mode: Mode.LE });
   
     spec.field('count', UInt8);
   
@@ -38,7 +38,7 @@ describe('UInt8', () => {
   });
 
   it('supports a then operation', () => {
-    const spec = new PayloadSpec();
+    const spec = new Spec();
 
     spec.field('count', UInt8, { then: (value: number) => value + 10 });
 
@@ -48,7 +48,7 @@ describe('UInt8', () => {
   })
 
   it('observes decimal place option after a then operation', () => {
-    const spec = new PayloadSpec();
+    const spec = new Spec();
 
     spec.field('count', UInt8, { then: (v: number) => v/3, dp: 2 });
 
@@ -58,7 +58,7 @@ describe('UInt8', () => {
   })
 
   it('keeps integer as integer even if dp specified', () => {
-    const spec = new PayloadSpec();
+    const spec = new Spec();
 
     spec.field('count', UInt8, { then: (v: number) => v/2, dp: 2 });
 
@@ -70,7 +70,7 @@ describe('UInt8', () => {
 
 describe('Int8', () => {
   it('reads a single signed int', () => {
-    const spec = new PayloadSpec();
+    const spec = new Spec();
 
     spec.field('count', Int8);
   
@@ -80,7 +80,7 @@ describe('Int8', () => {
   })
 
   it('ignores endianness', () => {
-    const spec = new PayloadSpec({ mode: Mode.LE });
+    const spec = new Spec({ mode: Mode.LE });
   
     spec.field('count', Int8);
   
@@ -90,7 +90,7 @@ describe('Int8', () => {
   })
 
   it('supports a then operation', () => {
-    const spec = new PayloadSpec();
+    const spec = new Spec();
 
     spec.field('count', Int8, { then: (value: number) => value + 10 });
 
@@ -102,7 +102,7 @@ describe('Int8', () => {
 
 describe('UInt16', () => {
   it('reads a single unsigned 16 bit int', () => {
-    const spec = new PayloadSpec();
+    const spec = new Spec();
 
     spec.field('count', UInt16);
   
@@ -112,7 +112,7 @@ describe('UInt16', () => {
   });
 
   it('has a bitSize of 16', () => {
-    const spec = new PayloadSpec();
+    const spec = new Spec();
 
     spec.field('count', UInt16);
     spec.field('count2', UInt16);
@@ -124,7 +124,7 @@ describe('UInt16', () => {
   });
 
   it('observes endianness', () => {
-    const spec = new PayloadSpec({ mode: Mode.LE });
+    const spec = new Spec({ mode: Mode.LE });
   
     spec.field('count', UInt16);
   
@@ -137,7 +137,7 @@ describe('UInt16', () => {
 
 describe('Int16', () => {
   it('reads a single signed 16 bit int', () => {
-    const spec = new PayloadSpec();
+    const spec = new Spec();
 
     spec.field('count', Int16);
   
@@ -147,7 +147,7 @@ describe('Int16', () => {
   });
 
   it('has a bitSize of 16', () => {
-    const spec = new PayloadSpec();
+    const spec = new Spec();
 
     spec.field('count', Int16);
     spec.field('count2', Int16);
@@ -159,7 +159,7 @@ describe('Int16', () => {
   });
 
   it('observes endianness', () => {
-    const spec = new PayloadSpec({ mode: Mode.LE });
+    const spec = new Spec({ mode: Mode.LE });
   
     spec.field('count', Int16);
   
@@ -171,7 +171,7 @@ describe('Int16', () => {
 
 describe('UInt32', () => {
   it('reads a single unsigned 32 bit int', () => {
-    const spec = new PayloadSpec();
+    const spec = new Spec();
 
     spec.field('count', UInt32);
   
@@ -181,7 +181,7 @@ describe('UInt32', () => {
   });
 
   it('has a bitSize of 32', () => {
-    const spec = new PayloadSpec();
+    const spec = new Spec();
 
     spec.field('count', UInt32);
     spec.field('count2', UInt32);
@@ -193,7 +193,7 @@ describe('UInt32', () => {
   });
 
   it('observes endianness', () => {
-    const spec = new PayloadSpec({ mode: Mode.LE });
+    const spec = new Spec({ mode: Mode.LE });
   
     spec.field('count', UInt32);
   
@@ -205,7 +205,7 @@ describe('UInt32', () => {
 
 describe('Int32', () => {
   it('reads a single signed 32 bit int', () => {
-    const spec = new PayloadSpec();
+    const spec = new Spec();
 
     spec.field('count', Int32);
   
@@ -215,7 +215,7 @@ describe('Int32', () => {
   });
 
   it('has a bitSize of 32', () => {
-    const spec = new PayloadSpec();
+    const spec = new Spec();
 
     spec.field('count', Int32);
     spec.field('count2', Int32);
@@ -227,7 +227,7 @@ describe('Int32', () => {
   });
 
   it('observes endianness', () => {
-    const spec = new PayloadSpec({ mode: Mode.LE });
+    const spec = new Spec({ mode: Mode.LE });
   
     spec.field('count', Int32);
   
@@ -239,7 +239,7 @@ describe('Int32', () => {
 
 describe('Float', () => {
   it('reads a signed float', () => {
-    const spec = new PayloadSpec();
+    const spec = new Spec();
 
     spec.field('count', Float);
   
@@ -249,7 +249,7 @@ describe('Float', () => {
   });
 
   it('has a bitSize of 32', () => {
-    const spec = new PayloadSpec();
+    const spec = new Spec();
 
     spec.field('count', Float);
     spec.field('count2', Float);
@@ -261,7 +261,7 @@ describe('Float', () => {
   });
 
   it('observes endianness', () => {
-    const spec = new PayloadSpec({ mode: Mode.LE });
+    const spec = new Spec({ mode: Mode.LE });
   
     spec.field('count', Float);
   
@@ -271,7 +271,7 @@ describe('Float', () => {
   });
 
   it('supports option for decimal places', () => {
-    const spec = new PayloadSpec();
+    const spec = new Spec();
 
     spec.field('count3dp', Float, { dp: 3 })
         .field('count1dp', Float, { dp: 1 })
@@ -285,7 +285,7 @@ describe('Float', () => {
 
 describe('Double', () => {
   it('reads a signed double', () => {
-    const spec = new PayloadSpec();
+    const spec = new Spec();
 
     spec.field('count', Double);
   
@@ -295,7 +295,7 @@ describe('Double', () => {
   });
 
   it('has a bitSize of 64', () => {
-    const spec = new PayloadSpec();
+    const spec = new Spec();
 
     spec.field('count', Double);
     spec.field('count2', Double);
@@ -307,7 +307,7 @@ describe('Double', () => {
   });
 
   it('observes endianness', () => {
-    const spec = new PayloadSpec({ mode: Mode.LE });
+    const spec = new Spec({ mode: Mode.LE });
   
     spec.field('count', Double);
   
@@ -317,7 +317,7 @@ describe('Double', () => {
   });
 
   it('supports options for decimal places', () => {
-    const spec = new PayloadSpec();
+    const spec = new Spec();
 
     spec.field('count3dp', Double, { dp: 3 })
         .field('count10dp', Double, { dp: 10 })

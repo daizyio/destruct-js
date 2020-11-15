@@ -14,13 +14,13 @@ export interface FieldOptions {
 
 export type ReaderState = { result: any, storedVars: any };
 
-export class PayloadSpec {
+export class Spec {
 
   private instructions: Instruction<any>[] = [];
 
   constructor(private options: ParsingOptions = { lenient: false, mode: Mode.BE }) {}
 
-  public field(name: string, Type: DataTypeCtor | Primitive, options?: FieldOptions): PayloadSpec {
+  public field(name: string, Type: DataTypeCtor | Primitive, options?: FieldOptions): Spec {
     if (typeof Type === 'function') {
       this.instructions.push(new Value(name, Type, options));
     } else {
@@ -29,7 +29,7 @@ export class PayloadSpec {
     return this;
   }
 
-  public store(name: string, Type: DataTypeCtor | Primitive, options?: FieldOptions): PayloadSpec {
+  public store(name: string, Type: DataTypeCtor | Primitive, options?: FieldOptions): Spec {
     if (typeof Type === 'function') {
       this.instructions.push(new Value(name, Type, { store: true, ...options }));
     } else {
@@ -39,39 +39,39 @@ export class PayloadSpec {
     return this;
   }
 
-  public derive(name: string, callback: (r: any) => number | string): PayloadSpec {
+  public derive(name: string, callback: (r: any) => number | string): Spec {
     this.instructions.push(new Calculation(name, callback));
     return this;
   }
 
-  public skip(sizable: number | NumericTypeCtor): PayloadSpec {
+  public skip(sizable: number | NumericTypeCtor): Spec {
     const skipBytes: number = (typeof sizable === 'number') ? sizable : Math.floor(new sizable().bitSize() / 8);
     this.instructions.push(new SkipInstruction(skipBytes))
     return this;
   }
 
-  public if(predicate: Predicate, otherSpec: PayloadSpec): PayloadSpec {
+  public if(predicate: Predicate, otherSpec: Spec): Spec {
     this.instructions.push(new IfInstruction(predicate, otherSpec));
     return this;
   }
 
   
-  public switch(valueProvider: ValueProvider, valueMap: {[k: string]: PayloadSpec}) {
+  public switch(valueProvider: ValueProvider, valueMap: {[k: string]: Spec}) {
     this.instructions.push(new LookupInstruction(valueProvider, valueMap));
     return this;
   }
 
-  public pad(): PayloadSpec {
+  public pad(): Spec {
     this.instructions.push(new PadInstruction());
     return this;
   }
 
-  public endianness(mode: Mode): PayloadSpec {
+  public endianness(mode: Mode): Spec {
     this.instructions.push(new EndiannessInstruction(mode));
     return this;
   }
 
-  public loop(name: string, repeat: number | ((r: any) => number), loopSpec: PayloadSpec) {
+  public loop(name: string, repeat: number | ((r: any) => number), loopSpec: Spec) {
     this.instructions.push(new LoopInstruction(name, repeat, loopSpec));
     return this;
   }
@@ -81,7 +81,12 @@ export class PayloadSpec {
     return this;
   }
 
+  // deprecated
   public exec(data: Buffer | PosBuffer, initialState?: ReaderState): any {
+    return this.read(data, initialState);
+  }
+
+  public read(data: Buffer | PosBuffer, initialState?: ReaderState): any {
     const posBuffer = data instanceof PosBuffer ? data : new PosBuffer(data, { endianness: this.options.mode, lenient: this.options.lenient });
 
     const reader = new BufferReader(posBuffer, this.instructions);
@@ -145,3 +150,5 @@ export interface ParsingOptions {
   mode?: Mode;
   lenient?: boolean;
 }
+
+export const PayloadSpec = Spec;

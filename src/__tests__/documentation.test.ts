@@ -1,10 +1,10 @@
-import { PayloadSpec } from '../payload_spec/payload_spec';
+import { Spec } from '../payload_spec/payload_spec';
 import { Mode } from '../pos_buffer/pos_buffer';
 import { UInt32, UInt8, Float, Text, UInt16, Bit, Int8, Bool, Bits4, Bits2, Bits5 } from '../pos_buffer/types';
 
 describe('Documentation examples', () => {
   test('The quick start', () => {
-    const spec = new PayloadSpec();        // big endian by default
+    const spec = new Spec();        // big endian by default
 
     spec.field('count', UInt32)            // 4 byte unsigned integer
         .field('temperature', UInt8,       // 1 byte unsigned...
@@ -21,7 +21,7 @@ describe('Documentation examples', () => {
 
   test('float decimal places example', () => {
     const result: any = 
-      new PayloadSpec()
+      new Spec()
         .field('count3dp', Float, { dp: 3 })
         .field('count1dp', Float, { dp: 1 })
         .exec(Buffer.from([0x40, 0x49, 0x0F, 0xD0, 0x40, 0x49, 0x0F, 0xD0]));
@@ -32,7 +32,7 @@ describe('Documentation examples', () => {
 
   test('Bool example', () => {
     const result = 
-      new PayloadSpec()
+      new Spec()
         .field('enabled', Bool)
         .field('ledOff', Bool)
         .field('releaseTheHounds', Bool)
@@ -46,7 +46,7 @@ describe('Documentation examples', () => {
   
   test('Bits example', () => {
     const result = 
-      new PayloadSpec()
+      new Spec()
         .field('enabled', Bit)
         .field('mode', Bits2)
         .field('frequency', Bits4)
@@ -62,7 +62,7 @@ describe('Documentation examples', () => {
 
   test('fixed size text', () => {
     const result = 
-      new PayloadSpec()
+      new Spec()
         .field('name', Text, { size: 3 })
         .exec(Buffer.from([0x62, 0x6f, 0x62]));
 
@@ -71,7 +71,7 @@ describe('Documentation examples', () => {
 
   test('terminated text', () => {
     const result = 
-      new PayloadSpec()
+      new Spec()
         .field('name', Text, { terminator: 0x00 })
         .exec(Buffer.from([0x62, 0x6f, 0x62, 0x00, 0x31, 0x32, 0x33]));
 
@@ -80,7 +80,7 @@ describe('Documentation examples', () => {
 
   test('unterminated text', () => {
     const result = 
-      new PayloadSpec()
+      new Spec()
         .field('name', Text)
         .exec(Buffer.from([0x62, 0x6f, 0x62, 0x31, 0x32, 0x33]));
 
@@ -89,7 +89,7 @@ describe('Documentation examples', () => {
 
   test('then example', () => {
     const result = 
-      new PayloadSpec()
+      new Spec()
         .field('numericText', Text, { size: 3, then: parseInt })
         .field('temperature', UInt8, { then: (f: any) => (f - 32) * (5/9)})
         .exec(Buffer.from([0x31, 0x32, 0x33, 0xD4]))
@@ -100,7 +100,7 @@ describe('Documentation examples', () => {
 
   test('skip example', () => {
     const result = 
-      new PayloadSpec()
+      new Spec()
         .field('firstByte', UInt8)
         .skip(UInt16)               // same as .skip(2)
         .field('lastByte', UInt8)
@@ -112,7 +112,7 @@ describe('Documentation examples', () => {
   
   test('endianness example', () => {
     const result = 
-      new PayloadSpec({ mode: Mode.BE })
+      new Spec({ mode: Mode.BE })
         .field('countBE', UInt16)
         .endianness(Mode.LE)
         .field('countLE', UInt16)
@@ -124,7 +124,7 @@ describe('Documentation examples', () => {
 
   test('store example', () => {
     const result = 
-    new PayloadSpec()
+    new Spec()
       .field('firstByte', UInt8)
       .store('ignoreMe', UInt8)
       .exec(Buffer.from([0xFF, 0x01]));
@@ -135,7 +135,7 @@ describe('Documentation examples', () => {
   
   test('derive example', () => {
     const result =
-      new PayloadSpec()
+      new Spec()
         .field('count', Int8)
         .derive('doubleCount', (r) => r.count * 2)
         .exec(Buffer.from([0x02]))
@@ -146,7 +146,7 @@ describe('Documentation examples', () => {
 
   test('pad example', () => {
     const result =
-      new PayloadSpec()
+      new Spec()
         .field('enabled', Bool).pad()
         .field('count', Int8)
         .exec(Buffer.from([0x80, 0x02]))
@@ -157,7 +157,7 @@ describe('Documentation examples', () => {
 
   test('literal example', () => {
     const result =
-      new PayloadSpec()
+      new Spec()
         .field('type', 'install')
         .store('pi', 3.14)
         .exec(Buffer.from([0x00]))
@@ -167,7 +167,7 @@ describe('Documentation examples', () => {
 
   test('shouldBe example', () => {
     const result = 
-      new PayloadSpec()
+      new Spec()
         .field('javaClassIdentifier', UInt32, { shouldBe: 0xCAFEBABE })
         .exec(Buffer.from([0xCA, 0xFE, 0xBA, 0xBE]))
 

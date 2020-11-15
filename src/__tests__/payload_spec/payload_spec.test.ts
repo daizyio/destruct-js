@@ -1,11 +1,11 @@
-import { PayloadSpec } from '../../payload_spec/payload_spec';
+import { Spec } from '../../payload_spec/payload_spec';
 import { Mode } from '../../pos_buffer/pos_buffer';
 import { UInt8, Int8, UInt16, Float, UInt32, Text, Bit, Bool, Bits3, Bits5, Bits2, Bits8 } from '../../pos_buffer/types';
 import '../matchers';
 
 describe('Simple fields', () => {
   it('reads fields in order from the buffer', () => {
-    const spec = new PayloadSpec();
+    const spec = new Spec();
 
     spec.field('count', UInt8)
         .field('temp', UInt8)
@@ -19,7 +19,7 @@ describe('Simple fields', () => {
   });
   
   it('writes fields in order to the buffer', () => {
-    const spec = new PayloadSpec();
+    const spec = new Spec();
 
     spec.field('count', UInt8)
         .field('temp', UInt8)
@@ -31,7 +31,7 @@ describe('Simple fields', () => {
   });
 
   it('can use lenient mode to stop parsing when buffer ends', () => {
-    const spec = new PayloadSpec({ lenient: true });
+    const spec = new Spec({ lenient: true });
 
     spec.field('count', UInt8)
         .field('temp', UInt8)
@@ -46,7 +46,7 @@ describe('Simple fields', () => {
 });
 describe('skip', () => {
   it('skips a number of bytes', () => {
-    const spec = new PayloadSpec();
+    const spec = new Spec();
     
     spec.field('count', UInt8)
         .skip(1)
@@ -62,7 +62,7 @@ describe('skip', () => {
   });
 
   it('skips the size of the passed data type', () => {
-    const spec = new PayloadSpec();
+    const spec = new Spec();
     
     spec.field('count', UInt8)
         .skip(Int8)
@@ -79,7 +79,7 @@ describe('skip', () => {
   });
 
   it('allows skip to the final byte of the buffer', () => {
-    const spec = new PayloadSpec();
+    const spec = new Spec();
     
     spec.field('count', UInt8)
         .skip(Int8)
@@ -90,7 +90,7 @@ describe('skip', () => {
   });
 
   it('supports skip when writing', () => {
-    const spec = new PayloadSpec();
+    const spec = new Spec();
     
     spec.field('count', UInt8)
         .skip(1)
@@ -106,7 +106,7 @@ describe('skip', () => {
 
 describe('endianness', () => {
   it('can switch enddianness', () => {
-    const result = new PayloadSpec({ mode: Mode.BE })
+    const result = new Spec({ mode: Mode.BE })
         .field('countBE', UInt16)
           .endianness(Mode.LE)
         .field('countLE', UInt16)
@@ -118,7 +118,7 @@ describe('endianness', () => {
   });
 
   it('can switch endianness when writing', () => {
-    const result = new PayloadSpec({ mode: Mode.BE })
+    const result = new Spec({ mode: Mode.BE })
       .field('countBE', UInt16)
         .endianness(Mode.LE)
       .field('countLE', UInt16)
@@ -132,7 +132,7 @@ describe('endianness', () => {
 describe('storing a field', () => {
   it('does not add to the result', () => {
     const result = 
-      new PayloadSpec()
+      new Spec()
         .field('firstByte', UInt8)
         .store('ignoreMe', UInt8)
         .exec(Buffer.from([0xFF, 0x01]));
@@ -143,7 +143,7 @@ describe('storing a field', () => {
 
   it('skips the required number of bytes', () => {
     const result =
-      new PayloadSpec()
+      new Spec()
         .store('ignoreMe', UInt8)
         .store('andMe', UInt32)
         .field('lastByte', UInt8)
@@ -156,7 +156,7 @@ describe('storing a field', () => {
 
   it('writes stored fields', () => {
     const result =
-    new PayloadSpec()
+    new Spec()
       .store('ignoreMe', UInt8)
       .store('andMe', UInt32)
       .field('lastByte', UInt8)
@@ -169,7 +169,7 @@ describe('storing a field', () => {
 describe('deriving a field', () => {
   it('creates a new field in the result', () => {
     const result = 
-      new PayloadSpec()
+      new Spec()
         .derive('derivedField', () => 5)
         .exec(Buffer.from([]));
 
@@ -178,7 +178,7 @@ describe('deriving a field', () => {
 
   it('does not skip any bytes in the buffer', () => {
     const result =
-      new PayloadSpec()
+      new Spec()
         .derive('derivedField', () => 5)
         .field('firstByte', Int8)
         .exec(Buffer.from([0x02]))
@@ -189,7 +189,7 @@ describe('deriving a field', () => {
 
   it('can reference other variables', () => {
     const result =
-      new PayloadSpec()
+      new Spec()
         .field('count', Int8)
         .derive('doubleCount', (r) => r.count * 2)
         .exec(Buffer.from([0x02]))
@@ -200,7 +200,7 @@ describe('deriving a field', () => {
 
   it('can used stored vars as well as fields', () => {
     const result =
-      new PayloadSpec()
+      new Spec()
         .field('count', UInt8)
         .store('factor', UInt8)
         .derive('total', (r) => r.count * r.factor)
@@ -211,7 +211,7 @@ describe('deriving a field', () => {
 
   it('ignores derived fields when writing', () => {
     const result =
-      new PayloadSpec()
+      new Spec()
         .field('count', UInt8)
         .store('factor', UInt8)
         .derive('total', (r) => r.count * r.factor)
@@ -224,7 +224,7 @@ describe('deriving a field', () => {
 describe('padding', () => {
   it('can be used to align to the byte boundary', () => {
     const result =
-      new PayloadSpec()
+      new Spec()
         .field('enabled', Bool).pad()
         .field('count', Int8)
         .exec(Buffer.from([0x80, 0x02]))
@@ -235,7 +235,7 @@ describe('padding', () => {
 
   it('aligns to the byte boundary when writing', () => {
     const result =
-      new PayloadSpec()
+      new Spec()
         .field('enabled', Bool).pad()
         .field('count', Int8)
         .write({ enabled: true, count: 2 })
@@ -245,7 +245,7 @@ describe('padding', () => {
 
   it('throws an error if trying to write Int from a non-padded position', () => {
     const spec = 
-      new PayloadSpec()
+      new Spec()
         .field('enabled', Bool)
         .field('count', Int8)
     
@@ -254,7 +254,7 @@ describe('padding', () => {
 
   it('does not error if previous bits add up to byte boundary when reading', () => {
     const spec = 
-      new PayloadSpec()
+      new Spec()
         .field('enabled', Bool)
         .field('days', Bits5)
         .field('frequency', Bits2)
@@ -265,7 +265,7 @@ describe('padding', () => {
 
   it('does not error if previous bits add up to byte boundary when writing', () => {
     const spec = 
-      new PayloadSpec()
+      new Spec()
         .field('enabled', Bool)
         .field('days', Bits5)
         .field('frequency', Bits2)
@@ -278,11 +278,11 @@ describe('padding', () => {
 describe('if', () => {
   it('evaluates conditional block', () => {
     const messageType1 = 
-      new PayloadSpec()
+      new Spec()
         .field('a1', UInt8)
 
     const mainSpec = 
-      new PayloadSpec()
+      new Spec()
         .field('type', UInt8)
         .if((r) => r.type === 1, messageType1)
 
@@ -300,11 +300,11 @@ describe('if', () => {
 
   it('evaluates conditional block when writing', () => {
     const messageType1 = 
-      new PayloadSpec()
+      new Spec()
         .field('a1', UInt8)
 
     const mainSpec = 
-      new PayloadSpec()
+      new Spec()
         .field('type', UInt8)
         .if((r) => r.type === 1, messageType1)
 
@@ -317,12 +317,12 @@ describe('if', () => {
     expect(result2).toBeHex('00');
   })
 
-  it('can accept PayloadSpec created inline', () => {
+  it('can accept Spec created inline', () => {
 
     const mainSpec = 
-      new PayloadSpec()
+      new Spec()
         .field('type', UInt8)
-        .if((r) => r.type === 1, new PayloadSpec()
+        .if((r) => r.type === 1, new Spec()
           .field('a1', UInt8)
         )
 
@@ -335,9 +335,9 @@ describe('if', () => {
   it('maintains a bit offset', () => {
 
     const mainSpec = 
-      new PayloadSpec()
+      new Spec()
         .field('type', Bits3)
-        .if((r) => true, new PayloadSpec()
+        .if((r) => true, new Spec()
           .field('a1', Bits8)
         )
 
@@ -350,9 +350,9 @@ describe('if', () => {
   it('maintains a bit offset when writing', () => {
 
     const mainSpec =
-      new PayloadSpec()
+      new Spec()
         .field('type', Bits3)
-        .if((r) => true, new PayloadSpec()
+        .if((r) => true, new Spec()
           .field('a1', Bits8)
         )
         .field('last', Bits5)
@@ -366,7 +366,7 @@ describe('if', () => {
 describe('literal value', () => {
   it('puts a literal string in the output', () => {
     const spec = 
-      new PayloadSpec()
+      new Spec()
         .field('type', 'install')
 
     const data = spec.exec(Buffer.from([0x00]));
@@ -376,7 +376,7 @@ describe('literal value', () => {
 
   it('ignores literals when writing', () => {
     const spec = 
-      new PayloadSpec()
+      new Spec()
         .field('type', 'install')
         .field('one', UInt8)
 
@@ -387,7 +387,7 @@ describe('literal value', () => {
 
   it('puts a literal number in the output', () => {
     const spec = 
-      new PayloadSpec()
+      new Spec()
         .field('type', 23)
         .field('float', 3.14)
 
@@ -399,7 +399,7 @@ describe('literal value', () => {
 
   it('puts a literal boolean in the output', () => {
     const spec = 
-      new PayloadSpec()
+      new Spec()
         .field('enabled', true)
 
     const data = spec.exec(Buffer.from([0x00]));
@@ -409,7 +409,7 @@ describe('literal value', () => {
 
   it('can also be used with store', () => {
     const spec =
-      new PayloadSpec()
+      new Spec()
         .store('enabled', true)
         .store('pi', 3.14)
         .store('add', '1')
@@ -430,7 +430,7 @@ describe('should be', () => {
   
   it('continues if the values match the expected', () => {
     const spec =
-      new PayloadSpec()
+      new Spec()
         .field('enabled', Bool, { shouldBe: true })
         .field('days', Bits3, { shouldBe: 5 })
         .pad()
@@ -445,7 +445,7 @@ describe('should be', () => {
 
   it('throws an error if the output doesnt match the expected', () => {
     const spec =
-      new PayloadSpec()
+      new Spec()
         .field('frequency', UInt8, { shouldBe: 3 })
 
     expect(() => spec.exec(Buffer.from([0x04]))).toThrowError(new Error('Expected frequency to be 3 but was 4'));
@@ -453,7 +453,7 @@ describe('should be', () => {
 
   it('still works if the expected value is falsy', () => {
     const spec =
-      new PayloadSpec()
+      new Spec()
         .field('frequency', UInt8, { shouldBe: 0 })
 
     expect(() => spec.exec(Buffer.from([0x01]))).toThrowError(new Error('Expected frequency to be 0 but was 1'));
@@ -461,7 +461,7 @@ describe('should be', () => {
 
   it('works for text', () => {
     const spec =
-      new PayloadSpec()
+      new Spec()
         .field('name', Text, { size: 3, shouldBe: 'bob' })
 
     expect(() => spec.exec(Buffer.from([0x6e, 0x65, 0x64]))).toThrowError(new Error('Expected name to be bob but was ned'));
@@ -469,7 +469,7 @@ describe('should be', () => {
 
   it('works for bits', () => {
     const spec =
-      new PayloadSpec()
+      new Spec()
         .field('bits', Bits3, { shouldBe: 4 })
       
     expect(() => spec.exec(Buffer.from([0x00]))).toThrowError(new Error('Expected bits to be 4 but was 0'));
@@ -477,7 +477,7 @@ describe('should be', () => {
 
   it('validates when writing', () => {
     const spec =
-      new PayloadSpec()
+      new Spec()
         .field('enabled', Bool, { shouldBe: true })
         .field('days', Bits3, { shouldBe: 5 })
         .pad()
@@ -490,16 +490,16 @@ describe('should be', () => {
 describe('switch', () => {
   it('looks up a spec in a table', () => {
     const specOne = 
-      new PayloadSpec()
+      new Spec()
         .field('one', UInt8)
 
     const specTwo =
-      new PayloadSpec()
+      new Spec()
         .skip(1)
         .field('two', UInt8)
 
     const mainSpec =
-      new PayloadSpec()
+      new Spec()
         .field('type', UInt8)
         .switch((r) => r.type, {
           '128': specOne,
@@ -522,16 +522,16 @@ describe('switch', () => {
 
   it('looks up a spec during writes', () => {
     const specOne = 
-      new PayloadSpec()
+      new Spec()
         .field('one', UInt8)
 
     const specTwo =
-      new PayloadSpec()
+      new Spec()
         .skip(1)
         .field('two', UInt8)
 
     const mainSpec =
-      new PayloadSpec()
+      new Spec()
         .field('type', UInt8)
         .switch((r) => r.type, {
           '128': specOne,
@@ -549,16 +549,16 @@ describe('switch', () => {
 
   it('uses the default option if the lookup does not succeed', () => {
     const specOne = 
-      new PayloadSpec()
+      new Spec()
         .field('one', UInt8)
 
     const specTwo =
-      new PayloadSpec()
+      new Spec()
         .skip(1)
         .field('two', UInt8)
 
     const mainSpec =
-      new PayloadSpec()
+      new Spec()
         .field('type', UInt8)
         .switch((r) => r.type, {
           128: specOne,
@@ -576,8 +576,8 @@ describe('switch', () => {
 describe('loop', () => {
   it('puts sub-spec into a nested property', () => {
     const loopSpec = 
-      new PayloadSpec()
-        .loop('nest', 3, new PayloadSpec()
+      new Spec()
+        .loop('nest', 3, new Spec()
           .field('val1', UInt8)
           .field('val2', UInt8)
         )
@@ -596,8 +596,8 @@ describe('loop', () => {
 
   it('reads sub-spec from nested properties when writing', () => {
     const loopSpec = 
-      new PayloadSpec()
-        .loop('nest', 3, new PayloadSpec()
+      new Spec()
+        .loop('nest', 3, new Spec()
           .field('val1', UInt8)
           .field('val2', UInt8)
         )
@@ -609,9 +609,9 @@ describe('loop', () => {
 
   it('does not duplicate values in nested specs', () => {
     const loopSpec = 
-      new PayloadSpec()
+      new Spec()
         .field('topLevel', UInt8)
-        .loop('nest', 3, new PayloadSpec()
+        .loop('nest', 3, new Spec()
           .field('val1', UInt8)
           .field('val2', UInt8)
         )
@@ -628,9 +628,9 @@ describe('loop', () => {
 
   it('can reference variables from outside the loop', () => {
     const loopSpec = 
-      new PayloadSpec()
+      new Spec()
         .store('var', 10)
-        .loop('nest', 2, new PayloadSpec()
+        .loop('nest', 2, new Spec()
           .store('val', UInt8)
             .derive('val1', (r) => r.var + r.val)
           .field('val2', UInt8)
@@ -648,9 +648,9 @@ describe('loop', () => {
 
   it('can use a result variable for the number of repetitions', () => {
     const loopSpec = 
-      new PayloadSpec()
+      new Spec()
         .field('arrayLength', UInt8)
-        .loop('nest', r => r.arrayLength, new PayloadSpec()
+        .loop('nest', r => r.arrayLength, new Spec()
           .field('val1', UInt8)
         )
 
@@ -665,9 +665,9 @@ describe('loop', () => {
 
   it('errors if loop variable is not a number', () => {
     const loopSpec = 
-      new PayloadSpec()
+      new Spec()
         .field('arrayLength', Text, { size: 3 })
-        .loop('nest', r => r.arrayLength, new PayloadSpec()
+        .loop('nest', r => r.arrayLength, new Spec()
           .field('val1', UInt8)
         )
 
@@ -676,9 +676,9 @@ describe('loop', () => {
 
   it('errors if loop variable is not an integer', () => {
     const loopSpec = 
-      new PayloadSpec()
+      new Spec()
         .field('arrayLength', Float)
-        .loop('nest', r => r.arrayLength, new PayloadSpec()
+        .loop('nest', r => r.arrayLength, new Spec()
           .field('val1', UInt8)
         )
 
@@ -687,10 +687,10 @@ describe('loop', () => {
 
   it('can be nested', () => {
     const loopSpec = 
-      new PayloadSpec()
-        .loop('level1', 2, new PayloadSpec()
+      new Spec()
+        .loop('level1', 2, new Spec()
           .field('l1Size', UInt8)
-          .loop('level2', (r) => r.l1Size, new PayloadSpec()
+          .loop('level2', (r) => r.l1Size, new Spec()
             .field('l2Value', UInt8))
         )
 
@@ -712,10 +712,10 @@ describe('loop', () => {
 
   it('can write multiple nesting', () => {
     const loopSpec = 
-      new PayloadSpec()
-        .loop('level1', 2, new PayloadSpec()
+      new Spec()
+        .loop('level1', 2, new Spec()
           .field('l1Size', UInt8)
-          .loop('level2', (r) => r.l1Size, new PayloadSpec()
+          .loop('level2', (r) => r.l1Size, new Spec()
             .field('l2Value', UInt8))
         )
 
@@ -729,7 +729,7 @@ describe('tap', () => {
   it('executes the provided code and passes the buffer and current state', () => {
     let fieldOne = null;
     const tappedSpec = 
-      new PayloadSpec()
+      new Spec()
         .field('one', UInt8)
         .tap((buffer, readerState) => fieldOne = readerState.result.one)
         .field('two', UInt8)
@@ -742,7 +742,7 @@ describe('tap', () => {
 
   it('can be tapped while writing', () => {
     const tappedSpec = 
-      new PayloadSpec()
+      new Spec()
         .field('one', UInt8)
         .tap((buffer, readerState) => buffer.write(UInt8, 255))
         .field('two', UInt8)
@@ -764,7 +764,7 @@ describe('writing', () => {
       bit3: 1,
       fl: 3.14
     }
-    const spec = new PayloadSpec()
+    const spec = new Spec()
       .field('one', UInt8)
       .field('two', UInt16)
       .skip(1)
@@ -783,7 +783,7 @@ describe('writing', () => {
   it('writes zeroes if relevant data not found in the input', () => {
     const data = { mid: 3 };
 
-    const spec = new PayloadSpec()
+    const spec = new Spec()
       .field('start', UInt16)
       .field('mid', UInt8)
       .field('end', UInt32)

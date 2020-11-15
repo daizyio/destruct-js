@@ -1,4 +1,4 @@
-import { PosBuffer, ReaderState, FieldOptions, DataTypeCtor, Mode, PayloadSpec } from '..';
+import { PosBuffer, ReaderState, FieldOptions, DataTypeCtor, Mode, Spec } from '..';
 
 export type Predicate = (r: any) => boolean;
 export type ValueProvider = (r: any) => Primitive;
@@ -88,7 +88,7 @@ export class Literal extends NamedValueProducer {
 }
 // ======
 export class IfInstruction extends ValueProducer {
-  constructor(private predicate: Predicate, private otherSpec: PayloadSpec) {
+  constructor(private predicate: Predicate, private otherSpec: Spec) {
     super({});
   }
 
@@ -110,7 +110,7 @@ export class IfInstruction extends ValueProducer {
 }
 // ======
 export class LookupInstruction extends ValueProducer {
-  constructor(private valueProvider: ValueProvider, private valueMap: {[k:string]: PayloadSpec}) {
+  constructor(private valueProvider: ValueProvider, private valueMap: {[k:string]: Spec}) {
     super({});
   }
 
@@ -140,7 +140,7 @@ export class LookupInstruction extends ValueProducer {
 }
 // ======
 export class LoopInstruction extends NamedValueProducer {
-  constructor(_name: string, private repeat: number | ((r: any) => number), private loopSpec: PayloadSpec) {
+  constructor(_name: string, private repeat: number | ((r: any) => number), private loopSpec: Spec) {
     super(_name, {});
   }
 
@@ -169,7 +169,7 @@ export class LoopInstruction extends NamedValueProducer {
       const nextContext = Array.isArray(value) ? value[i] : value;
 
       if (!nextContext) return;
-      
+
       const tempState = JSON.parse(JSON.stringify(nextContext));
       this.loopSpec.write(tempState, buffer)
     });

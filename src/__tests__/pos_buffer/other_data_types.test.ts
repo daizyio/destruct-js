@@ -1,9 +1,9 @@
-import { PayloadSpec } from '../../payload_spec/payload_spec'
+import { Spec } from '../../payload_spec/payload_spec'
 import { Text, Int8, Int16, UInt8, Bit, Bits2, Bits3, Bits4, Bits5, Bits6, Bits7, Bool, Bits8, Bits9, Bits10, Bits11, Bits12, Bits13, Bits14, Bits15, Bits16 } from '../../pos_buffer/types';
 
 describe('Text', () => {
   it('reads text as ascii', () => {
-    const spec = new PayloadSpec();
+    const spec = new Spec();
 
     spec.field('name', Text, { size: 3 });
 
@@ -13,7 +13,7 @@ describe('Text', () => {
   });
 
   it('sets offsets correctly', () => {
-    const spec = new PayloadSpec();
+    const spec = new Spec();
 
     spec.field('count', Int16)
         .field('name', Text, { size: 3 })
@@ -27,7 +27,7 @@ describe('Text', () => {
   });
 
   it('uses utf8 by default', () => {
-    const spec = new PayloadSpec();
+    const spec = new Spec();
 
     spec.field('iSpeak', Text, { size: 15 });
 
@@ -37,7 +37,7 @@ describe('Text', () => {
   });
 
   it('can use other encodings', () => {
-    const spec = new PayloadSpec();
+    const spec = new Spec();
 
     spec.field('b64', Text, { size: 15, encoding: 'base64' });
     
@@ -47,7 +47,7 @@ describe('Text', () => {
   });
 
   it('gives raw  hex as text when hex encoding used', () => {
-    const spec = new PayloadSpec();
+    const spec = new Spec();
 
     spec.field('imei', Text, { size: 8, encoding: 'hex' });
     
@@ -57,7 +57,7 @@ describe('Text', () => {
   })
 
   it('can specify a terminator', () => {
-    const spec = new PayloadSpec();
+    const spec = new Spec();
 
     spec.field('name', Text, { terminator: 0x00 })
         .field('one', Int8);
@@ -70,7 +70,7 @@ describe('Text', () => {
 
   it('includes terminator in offset', () => {
 
-    const spec = new PayloadSpec();
+    const spec = new Spec();
 
     spec.field('one', Text, { terminator: 0x00 })
         .field('two', Text, { terminator: 0x00 })
@@ -84,7 +84,7 @@ describe('Text', () => {
   });
 
   it('reads to end of buffer if neither size nor terminator is specified', () => {
-    const spec = new PayloadSpec();
+    const spec = new Spec();
 
     spec.field('one', Int8)
         .field('name', Text);
@@ -96,7 +96,7 @@ describe('Text', () => {
   });
 
   it('sets size if reading to end of buffer', () => {
-    const spec = new PayloadSpec();
+    const spec = new Spec();
 
     spec.field('one', Int8)
         .field('name', Text)
@@ -106,7 +106,7 @@ describe('Text', () => {
   });
 
   it('supports then function to do conversions', () => {
-    const spec = new PayloadSpec();
+    const spec = new Spec();
 
     spec.field('number', Text, { then: parseInt });
 
@@ -119,7 +119,7 @@ describe('Text', () => {
 
 describe('Bool', () => {
   it('retrieves a single bit from the field as a boolean', () => {
-    const spec = new PayloadSpec();
+    const spec = new Spec();
 
     spec.field('enabled', Bool);
 
@@ -129,7 +129,7 @@ describe('Bool', () => {
   })
 
   it('can read multiple bools in a row', () => {
-    const spec = new PayloadSpec();
+    const spec = new Spec();
 
     spec.field('enabled', Bool)
         .field('ledOff', Bool)
@@ -144,7 +144,7 @@ describe('Bool', () => {
   });
 
   it('can read bools after reading bytes', () => {
-    const spec = new PayloadSpec();
+    const spec = new Spec();
 
     spec.field('firstByte', UInt8)
         .field('secondByte', UInt8)
@@ -162,7 +162,7 @@ describe('Bool', () => {
 
 describe('Bit', () => {
   it('retrieves a single bit from the field as 0 or 1', () => {
-    const spec = new PayloadSpec();
+    const spec = new Spec();
 
     spec.field('enabled', Bit);
 
@@ -172,7 +172,7 @@ describe('Bit', () => {
   })
 
   it('can read multiple bits in a row', () => {
-    const spec = new PayloadSpec();
+    const spec = new Spec();
 
     spec.field('enabled', Bit)
         .field('ledOff', Bit)
@@ -187,7 +187,7 @@ describe('Bit', () => {
   });
 
   it('can read bits after reading bytes', () => {
-    const spec = new PayloadSpec();
+    const spec = new Spec();
 
     spec.field('firstByte', UInt8)
         .field('secondByte', UInt8)
@@ -205,7 +205,7 @@ describe('Bit', () => {
 
 describe('Bits', () => {
   it('has aliases for taking 2-16 bits', async () => {
-    const spec = new PayloadSpec()
+    const spec = new Spec()
       .field('bits2', Bits2)
       .field('bits3', Bits3)
       .field('bits4', Bits4)
@@ -246,7 +246,7 @@ describe('Bits', () => {
   });
 
   it('supports then', () => {
-    const result = new PayloadSpec()
+    const result = new Spec()
       .field('bits2', Bits2, { then: (v:number) => v * 4 })
       .exec(Buffer.from([0xC2]))
 
