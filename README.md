@@ -124,6 +124,18 @@ const result =
 expect(result.name).toBe('bob');
 ```
 
+If the size is determined dynamically, you can pass a function to the size parameter that will resolve a value from the result map
+
+```
+const result = 
+  new Spec()
+    .field('nameSize', UInt8)
+    .field('name', Text, { size: r => r.nameSize })
+    .read(Buffer.from([0x03, 0x62, 0x6f, 0x62, 0x65, 0x66, 0x67]));
+
+expect(result.name).toBe('bob');
+```
+
 or a terminator character:
 
 ```

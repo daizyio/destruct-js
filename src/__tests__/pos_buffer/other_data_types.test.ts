@@ -114,6 +114,16 @@ describe('Text', () => {
 
     expect(result.number).toBe(123);
   })
+
+  it('allows size to be specified dynamically', () => {
+    const spec = new Spec()
+      .field('size', UInt8)
+      .field('number', Text, { size: (r) => r.size });
+
+    const result = spec.exec(Buffer.from([0x02, 0x31, 0x32, 0x33]))
+
+    expect(result.number).toBe('12');
+  })
 })
 
 

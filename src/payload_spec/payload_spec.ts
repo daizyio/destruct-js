@@ -6,7 +6,7 @@ export interface FieldOptions {
   dp?: number;
   then?: (v: any) => Primitive;
   shouldBe?: Primitive;
-  size?: number;
+  size?: number | ((v: any) => number);
   encoding?: Encoding; 
   value?: Primitive;
   store?: boolean;
