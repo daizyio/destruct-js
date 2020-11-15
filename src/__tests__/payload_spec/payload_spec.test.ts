@@ -756,6 +756,35 @@ describe('include', () => {
     expect(result).toBeHex('01020304');
   })
 })
+
+describe('group', () => {
+  it('groups included specs under a different key', () => {
+    const header = new Spec()
+      .field('version', UInt8)
+      .field('fileSize', UInt16)
+
+    const dataBlock = new Spec()
+      .field('identifier', UInt8)
+      .field('dataLength', UInt8)
+
+    const mainSpec = new Spec()
+      .group('header', header)
+      .group('data', dataBlock)
+
+    const result = mainSpec.read(Buffer.from([0x02, 0x00, 0x80, 0xDE, 0x03]))
+
+    expect(result).toEqual({
+      header: {
+        version: 2,
+        fileSize: 128
+      },
+      data: {
+        identifier: 0xDE,
+        dataLength: 3
+      }
+    })
+  })
+})
 describe('tap', () => {
   it('executes the provided code and passes the buffer and current state', () => {
     let fieldOne = null;

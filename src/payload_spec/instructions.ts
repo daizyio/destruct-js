@@ -203,10 +203,24 @@ export class LoopInstruction extends NamedValueProducer {
     return this._name;
   }
 }
-
+// =======
 export class IncludeInstruction extends ValueProducer {
   constructor(private includedSpec: Spec) {
     super({});
+  }
+
+  public execute(buffer: PosBuffer, readerState: ReaderState) {
+    return this.includedSpec.read(buffer, readerState);
+  }
+
+  public write(buffer: PosBuffer, readerState: ReaderState): void {
+    this.includedSpec.write(readerState.result, buffer);
+  }
+}
+// =======
+export class GroupInstruction extends NamedValueProducer {
+  constructor(_name: string, private includedSpec: Spec) {
+    super(_name, {});
   }
 
   public execute(buffer: PosBuffer, readerState: ReaderState) {

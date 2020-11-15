@@ -254,9 +254,40 @@ Control Flow
 
 You can conditionally parse parts of the buffer using some control statements that mirror standard JS.
 
-`if((r: any) => boolean, Spec)` - executes the specified `Spec` if the function evaluates to true. All state in the original spec (variables, position etc.) is passed to the new spec, and control and state is returned to the original spec once the new spec (and any specs executed within that) are completed.
+`include(spec: Spec)` - executes the specified `Spec`, and stores results at (or reads data from) the current level in the result object.  All state in the original spec (variables, position etc.) is passed to the new spec, and control and state is returned to the original spec once the new spec (and any specs executed within that) are completed. 
 
-`switch((r: any) => string | number | boolean, {[k:string]: Spec})` - looks up the value returned from the function in a map, and executes the associated spec.  Note that the function may return any primitive, but it will be converted to a string, and the keys of the map *must* be strings.  If the value returned from the function is not found in the map, the option with a key of `default` will be used.  No error will be thrown if neither the value nor 'default' exist in the map.
+`group(name: string, spec: Spec)` - executes the specified `Spec`,  but stores results under (or reads data from) the specified key in the result object.
+
+```
+const header = new Spec()
+  .field('version', UInt8)
+  .field('filesize', UInt16)
+
+const dataBlock = new Spec()
+  .field('identifier', UInt8)
+  .field('dataLength', UInt8)
+
+const mainSpec = new Spec()
+  .group('header', header)
+  .group('data', dataBlock)
+
+const result = mainSpec.read(Buffer.from([0x02, 0x00, 0x80, 0xDE, 0x03]))
+
+expect(result).toEqual({
+  header: {
+    version: 2,
+    fileSize: 128
+  },
+  data: {
+    identifier: 0xDE,
+    dataLength: 3
+  }
+})
+```
+
+`if((r: any) => boolean, Spec)` - executes the specified `Spec` if the function evaluates to true.  The function is passed the current result object.
+
+`switch((r: any) => string | number | boolean, {[k:string]: Spec})` - looks up the value returned from the function in a map, and executes the associated spec.  Note that the function may return any primitive, but it will be converted to a string, and the keys of the map *must* be strings.  If the value returned from the function is not found in the map, the option with a key of `default` will be used.  No error will be thrown if neither the value nor 'default' exist in the map, the spec will simply continue from the next instruction.
 
 `loop(string, number | ((r:any) => number), Spec)` - repeats the specified Spec the given number of times, either a literal number or a function that returns a number. Specs are returned as a nested entry in the result under the given name.  When writing, loops can also be used, and expects to find data in the same nested structure as would be produced when reading.
 
