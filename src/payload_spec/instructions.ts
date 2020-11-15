@@ -204,6 +204,20 @@ export class LoopInstruction extends NamedValueProducer {
   }
 }
 
+export class IncludeInstruction extends ValueProducer {
+  constructor(private includedSpec: Spec) {
+    super({});
+  }
+
+  public execute(buffer: PosBuffer, readerState: ReaderState) {
+    return this.includedSpec.read(buffer, readerState);
+  }
+
+  public write(buffer: PosBuffer, readerState: ReaderState): void {
+    this.includedSpec.write(readerState.result, buffer);
+  }
+}
+
 // ======= NULL INSTRUCTIONS ==============
 
 abstract class NullInstruction implements Instruction<void> {

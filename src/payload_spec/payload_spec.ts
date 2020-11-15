@@ -1,4 +1,4 @@
-import { Instruction, Primitive, Value, Literal, Calculation, SkipInstruction, IfInstruction, LookupInstruction, PadInstruction, EndiannessInstruction, ValueProducer, Predicate, ValueProvider, LoopInstruction, NamedValueProducer, TapInstruction } from './instructions';
+import { Instruction, Primitive, Value, Literal, Calculation, SkipInstruction, IfInstruction, LookupInstruction, PadInstruction, EndiannessInstruction, ValueProducer, Predicate, ValueProvider, LoopInstruction, NamedValueProducer, TapInstruction, IncludeInstruction } from './instructions';
 import { PosBuffer, DataTypeCtor, Encoding, Mode, NumericTypeCtor } from '../pos_buffer/pos_buffer';
 
 export interface FieldOptions {
@@ -73,6 +73,11 @@ export class Spec {
 
   public loop(name: string, repeat: number | ((r: any) => number), loopSpec: Spec) {
     this.instructions.push(new LoopInstruction(name, repeat, loopSpec));
+    return this;
+  }
+
+  public include(includedSpec: Spec) {
+    this.instructions.push(new IncludeInstruction(includedSpec));
     return this;
   }
 

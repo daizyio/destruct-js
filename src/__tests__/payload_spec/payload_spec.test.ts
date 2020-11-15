@@ -725,6 +725,37 @@ describe('loop', () => {
   })
 })
 
+describe('include', () => {
+  it('includes another spec at the current level', () => {
+    const includedSpec = new Spec()
+      .field('middle', UInt16)
+
+    const mainSpec = new Spec()
+      .field('first', UInt8)
+      .include(includedSpec)
+      .field('last', UInt8)
+
+    const result = mainSpec.read(Buffer.from([0x01, 0x02, 0x03, 0x04]));
+
+    expect(result.first).toBe(1);
+    expect(result.middle).toBe(515);
+    expect(result.last).toBe(4);
+  })
+
+  it('includes another spec at the current level when writing', () => {
+    const includedSpec = new Spec()
+      .field('middle', UInt16)
+
+    const mainSpec = new Spec()
+      .field('first', UInt8)
+      .include(includedSpec)
+      .field('last', UInt8)
+
+    const result = mainSpec.write({ first: 1, middle: 515, last: 4});
+
+    expect(result).toBeHex('01020304');
+  })
+})
 describe('tap', () => {
   it('executes the provided code and passes the buffer and current state', () => {
     let fieldOne = null;
