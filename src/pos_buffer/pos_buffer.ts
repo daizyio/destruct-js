@@ -9,7 +9,7 @@ export class PosBuffer {
   private offsetBytes: number = 0;
   private offsetBits: number = 0;
 
-  private writeBuffers: [buffer: Buffer, offset: number][] = [];
+  private writeBuffers: [Buffer, number][] = [];
   private writeBitBuffer: number = 0;
 
   constructor(bytes: Buffer | number[], private options: BufferOptions = {}) {
