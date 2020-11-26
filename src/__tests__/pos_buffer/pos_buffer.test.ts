@@ -531,6 +531,14 @@ describe('then', () => {
   })
 })
 
+describe('before', () => {
+  it('executes the function before the value is written', () => {
+    const buffer = new PosBuffer([]);
+
+    expect(buffer.write(Int8, 100, { before: (v) => v / 10})).toBeHex('0A');
+  })
+})
+
 describe('padding', () => {
   it('can be used to align to the byte boundary', () => {    
     const buffer = new PosBuffer([0x80, 0x02]);

@@ -41,8 +41,9 @@ export class PosBuffer {
   }
 
   public write(dataType: DataTypeCtor, value: string | number | boolean, options?: TypeWriteOptions): Buffer {
+    const transformedValue = (options?.before) ? options?.before(value) : value;
     const dataInstruction = new dataType(options);
-    const newBuffer = dataInstruction.write(this, value);
+    const newBuffer = dataInstruction.write(this, transformedValue);
 
     this.updateOffset(dataInstruction.size);
     this.writeBuffers.push([newBuffer, this.offsetBytes]);
@@ -177,6 +178,7 @@ export interface TypeWriteOptions {
   encoding?: Encoding,
   terminator?: string | number;
   size?: number;
+  before?: (v: any) => Primitive;
 }
 
 export enum Mode {

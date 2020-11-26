@@ -191,18 +191,21 @@ Other options
 
 These options apply to any data type, in addition to the type specific options noted above.
 
-`then: (any) => any` - All data types support a `then` option to do some post processing on the value.  The `then` option should be a function that takes the value read from the buffer as input, and outputs some other value, which may or may not be of the same type. `then` is not applicable when writing.
+`then: (any) => any` - All data types support a `then` option to do some post processing on the value when reading.  The `then` option should be a function that takes the value read from the buffer as input, and outputs some other value, which may or may not be of the same type. The equivalent of `then` when writing is `before`.
+
+`before: (any) => any` - All data types support a `before` option to do some pre processing on the value when writing. The `before` option should be a function that takes the value read from the data object, and outputs a value, which may or may not be of the same type, to write to the buffer.
 
 ```
 const result = 
   new Spec()
     .field('numericText', Text, { size: 3, then: parseInt })
-    .field('temperature', UInt8, { then: (f) => (f - 32) * (5/9)})
+    .field('temperature', UInt8, { then: (f) => (f - 32) * (5/9), before: (c) => (c * 9/5) + 32 })
     .read(Buffer.from([0x31, 0x32, 0x33, 0xD4]))
 
 expect(result.numericText).toBe(123);
 expect(result.temperature).toBe(100);
 ```
+
 
 `shouldBe: (string | number | boolean)` - All data types support a `shouldBe` option, that can be used to assert that a particular value should be fixed.  For example, you might use this to check that a particular delimiter is present.  If the value read from the buffer does not match the expected value, an `Error` will be thrown.  `shouldBe` also applies when writing, and validates that the value in the object passed for writing matches the expected value.
 
