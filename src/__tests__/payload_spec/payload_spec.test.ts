@@ -852,4 +852,22 @@ describe('writing', () => {
 
     expect(result).toBeHex('00000300000000');
   })
+
+  it('writes single bool with padding', () => {
+    const data = {
+      one: 12,
+      two: 1024,
+      flag: true,
+    }
+    const spec = new Spec()
+      .field('one', UInt8)
+      .field('two', UInt16)
+      .field('flag', Bool)
+      .skip(2)
+
+    const result = spec.write(data);
+
+    expect(result.toString('hex').toUpperCase()).toBe("0C0400800000")
+  })
+
 })

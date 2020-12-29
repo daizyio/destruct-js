@@ -3,3 +3,4 @@ dist
 node_modules
 *.code-workspace
 ideas.txt
+examples

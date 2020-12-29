@@ -40,13 +40,16 @@ export class PosBuffer {
     return thennedValue;
   }
 
-  public write(dataType: DataTypeCtor, value: string | number | boolean, options?: TypeWriteOptions): Buffer {
+  public write(dataType: DataTypeCtor, value: string | number | boolean, options?: TypeWriteOptions): Buffer | null {
     const transformedValue = (options?.before) ? options?.before(value) : value;
     const dataInstruction = new dataType(options);
     const newBuffer = dataInstruction.write(this, transformedValue);
 
     this.updateOffset(dataInstruction.size);
-    this.writeBuffers.push([newBuffer, this.offsetBytes]);
+
+    if (newBuffer) {
+      this.writeBuffers.push([newBuffer, this.offsetBytes]);
+    }
     return newBuffer;
   }
 
@@ -57,6 +60,7 @@ export class PosBuffer {
   }
 
   public skip(bytes: number): PosBuffer {
+    this.pad();
     this.updateOffset(bytes * 8);
     if (bytes > 0) {
       this.writeBuffers.push([Buffer.alloc(bytes), this.offsetBytes]);
