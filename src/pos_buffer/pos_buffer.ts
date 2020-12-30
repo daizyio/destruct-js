@@ -40,7 +40,7 @@ export class PosBuffer {
     return thennedValue;
   }
 
-  public write(dataType: DataTypeCtor, value: string | number | boolean, options?: TypeWriteOptions): Buffer | null {
+  public write(dataType: DataTypeCtor, value: string | number | boolean, options?: TypeWriteOptions): Buffer {
     const transformedValue = (options?.before) ? options?.before(value) : value;
     const dataInstruction = new dataType(options);
     const newBuffer = dataInstruction.write(this, transformedValue);
