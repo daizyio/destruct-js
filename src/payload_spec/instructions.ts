@@ -37,7 +37,8 @@ export abstract class NamedValueProducer extends ValueProducer {
       terminator: options.terminator,
       dp: options.dp,
       encoding: options.encoding,
-      then: options.then
+      then: options.then,
+      mode: options.mode
     };
 
   }

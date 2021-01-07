@@ -17,6 +17,16 @@ describe('Simple fields', () => {
     expect(result.temp).toBe(2);
     expect(result.pi).toBe(3.141590118408203);
   });
+
+  it('can read a field as little endian', () => {
+    const spec = new Spec();
+
+    spec.field('count', UInt16, { mode: Mode.LE })
+
+    const result = spec.exec(Buffer.from([0xFF, 0x02]));
+
+    expect(result.count).toBe(767);
+  });
   
   it('writes fields in order to the buffer', () => {
     const spec = new Spec();

@@ -10,6 +10,7 @@ export interface FieldOptions {
   encoding?: Encoding; 
   value?: Primitive;
   store?: boolean;
+  mode?: Mode;
 }
 
 export type ReaderState = { result: any, storedVars: any };
