@@ -21,7 +21,8 @@ export abstract class NumericDataType extends DataType {
 
   public execute(buffer: PosBuffer): number {
     this.assertAtByteBoundary(buffer.offset);
-    const valueFunction = (buffer.mode === Mode.BE) ? this.be : this.le;
+    const mode = this.options?.mode ?? buffer.mode;
+    const valueFunction = (mode === Mode.BE) ? this.be : this.le;
     const boundFunction = valueFunction.bind(buffer.buffer);
     const value = boundFunction(buffer.offset.bytes);
     return value;

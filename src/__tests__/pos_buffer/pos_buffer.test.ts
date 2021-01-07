@@ -171,6 +171,14 @@ describe('Numeric types', () => {
     expect(buffer).toBeHex('FA45C4AE');
   });
 
+  it('can take mode as an option', () => {
+    const buffer = new PosBuffer([0xFA, 0x45, 0xC4, 0xAE], { endianness: Mode.LE })
+
+    expect(buffer.read(UInt32, { mode: Mode.BE })).toBe(4198876334)
+  })
+});
+
+describe('Floating point numbers', () => {
   it('reads a signed float', () => {
     const buffer = new PosBuffer([0x40, 0x49, 0x0F, 0xD0]);
     
@@ -222,9 +230,7 @@ describe('Numeric types', () => {
     buffer.write(Double, 3.14150000000000018118839761883E0);
     expect(buffer).toBeHex('6F1283C0CA210940');
   });
-});
 
-describe('Floating point numbers', () => {
   it('can specify decimal places', () => {
     const buffer = new PosBuffer([0x40, 0x49, 0x0F, 0xD0, 0x40, 0x49, 0x0F, 0xD0]);
     expect(buffer.read(Float, { dp: 3 })).toBe(3.142);

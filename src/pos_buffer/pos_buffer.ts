@@ -175,6 +175,7 @@ export interface TypeOptions {
   encoding?: Encoding;
   terminator?: string | number;
   dp?: number;
+  mode?: Mode;
   then?: (v: any) => Primitive;
 }
 
