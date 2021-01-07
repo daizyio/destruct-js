@@ -59,7 +59,7 @@ Numeric Data Types
 
 Numeric data types will read a number from the buffer with the specified size. All the numeric data types you would expect to see are supported, and if you're reading this probably do not need explanation - `Int8`, `UInt8`, `Int16`, `UInt16`, `Int32`, `UInt32`, `Float`, `Double`.
 
-`Float` and `Double` support an additional `dp` configuration, which limits the number of decimal places
+`Float` and `Double` support an additional `dp` configuration, which limits the number of decimal places.  All numeric types can also take a `mode` configuration to read a single field in a different mode to the rest of the buffer.
 
 ```
 const result: any = 
