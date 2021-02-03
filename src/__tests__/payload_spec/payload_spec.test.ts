@@ -881,3 +881,33 @@ describe('writing', () => {
   })
 
 })
+
+describe('then/before', () => {
+  it('uses then option to post-process a value when reading', () => {
+    const buffer = Buffer.from('0C0400', 'hex');
+
+    const spec = new Spec()
+      .field('one', UInt8, { then: v => v * 2 })
+      .field('two', UInt16, { then: v => v / 2})
+
+    const result = spec.read(buffer);
+
+    expect(result.one).toBe(24);
+    expect(result.two).toBe(512);
+  })
+
+  it('uses before option to pre-process a value when writing', () => {
+    const data = {
+      one: 24,
+      two: 512
+    }
+
+    const spec = new Spec()
+      .field('one', UInt8, { before: v => v / 2 })
+      .field('two', UInt16, { before: v => v * 2})
+
+    const result = spec.write(data);
+
+    expect(result).toBeHex('0C0400');
+  })
+})

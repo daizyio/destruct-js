@@ -27,18 +27,22 @@ export abstract class NamedValueProducer extends ValueProducer {
   abstract execute(buffer: PosBuffer, readerState: ReaderState): Primitive | Array<any> | undefined;
   public write(buffer: PosBuffer, readerState: ReaderState): void {}
 
-  protected resolveOptions(options: FieldOptions | undefined, readerState: ReaderState): TypeOptions | undefined {
-    if (!options) return undefined;
+  protected resolveOptions(readerState: ReaderState): TypeOptions | undefined {
+    if (!this.options) return undefined;
 
     const combinedState = { ...readerState.result, ...readerState.storedVars};
 
+    if (this.options.before) {
+      console.log('Have a before option');
+    }
     return {
-      size: this.resolveOption(options.size, combinedState),
-      terminator: options.terminator,
-      dp: options.dp,
-      encoding: options.encoding,
-      then: options.then,
-      mode: options.mode
+      size: this.resolveOption(this.options.size, combinedState),
+      terminator: this.options.terminator,
+      dp: this.options.dp,
+      encoding: this.options.encoding,
+      then: this.options.then,
+      before: this.options.before,
+      mode: this.options.mode
     };
 
   }
@@ -67,7 +71,7 @@ export class Value extends NamedValueProducer {
   }
 
   execute(buffer: PosBuffer, readerState: ReaderState): Primitive | undefined {
-    const value = buffer.read(this.Type, this.resolveOptions(this.options, readerState));
+    const value = buffer.read(this.Type, this.resolveOptions(readerState));
     this.check(value);
     
     return value;
@@ -77,7 +81,7 @@ export class Value extends NamedValueProducer {
     const value = readerState.result[this._name];
     this.check(value);
 
-    buffer.write(this.Type, value);
+    buffer.write(this.Type, value, this.resolveOptions(readerState));
   }
 
   public check(value: any): void {

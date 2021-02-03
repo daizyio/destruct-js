@@ -177,6 +177,7 @@ export interface TypeOptions {
   dp?: number;
   mode?: Mode;
   then?: (v: any) => Primitive;
+  before?: (v: any) => Primitive;
 }
 
 export interface TypeWriteOptions {

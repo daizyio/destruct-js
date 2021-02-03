@@ -5,6 +5,7 @@ export interface FieldOptions {
   terminator?: string | number;
   dp?: number;
   then?: (v: any) => Primitive;
+  before?: (v: any) => Primitive;
   shouldBe?: Primitive;
   size?: number | ((v: any) => number);
   encoding?: Encoding; 
