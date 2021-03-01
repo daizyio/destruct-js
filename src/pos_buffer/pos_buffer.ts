@@ -136,6 +136,10 @@ export class PosBuffer {
     this.offsetBits = offset.bits;
   }
 
+  get finished(): boolean {
+    return this.offset.bytes === this.buffer.length;
+  }
+
   public flipBits(bitPos: number, value: number) {
     this.writeBitBuffer = this.writeBitBuffer | (value << (7 - bitPos))
     if (bitPos == 7) {

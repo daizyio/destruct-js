@@ -673,6 +673,36 @@ describe('loop', () => {
     expect(result.nest[1].val1).toBe(254);
   })
 
+  it('loops until the end of the buffer if function is null', () => {
+    const loopSpec = 
+      new Spec()
+        .field('arrayLength', UInt8)
+        .loop('nest', null, new Spec()
+          .field('val1', UInt8)
+        )
+
+    const result = loopSpec.exec(Buffer.from([0x02, 0xFF, 0xFE, 0xFD, 0xFC]));
+
+    expect(result.arrayLength).toBe(2);
+    expect(result.nest).toBeDefined();
+    expect(result.nest).toHaveLength(4);
+    expect(result.nest[0].val1).toBe(255);
+    expect(result.nest[1].val1).toBe(254);
+    expect(result.nest[2].val1).toBe(253);
+    expect(result.nest[3].val1).toBe(252);
+  })
+
+  it('errors if looping is incomplete at end of buffer', () => {
+    const loopSpec = 
+      new Spec()
+        .field('arrayLength', UInt8)
+        .loop('nest', null, new Spec()
+          .field('val1', UInt16)
+        )
+
+    expect(() => loopSpec.exec(Buffer.from([0x02, 0xFF, 0xFE, 0xFD, 0xFC, 0xFB]))).toThrowError();
+  })
+
   it('errors if loop variable is not a number', () => {
     const loopSpec = 
       new Spec()
@@ -682,6 +712,19 @@ describe('loop', () => {
         )
 
     expect(() => loopSpec.exec(Buffer.from([0x6e, 0x65, 0x64, 0xFF, 0xFE]))).toThrowError('Loop count must be an integer');
+  })
+
+  it('loops over whole array if no loop count specified when writing', () => {
+    const loopSpec = 
+      new Spec()
+        .loop('nest', null, new Spec()
+          .field('val1', UInt8)
+          .field('val2', UInt8)
+        )
+
+    const result = loopSpec.write({ nest: [ { val1: 1, val2: 255 }, { val1: 2, val2: 254 }, { val1: 3, val2: 253 }]});
+
+    expect(result).toBeHex('01FF02FE03FD')
   })
 
   it('errors if loop variable is not an integer', () => {

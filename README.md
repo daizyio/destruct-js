@@ -292,7 +292,7 @@ expect(result).toEqual({
 
 `switch((r: any) => string | number | boolean, {[k:string]: Spec})` - looks up the value returned from the function in a map, and executes the associated spec.  Note that the function may return any primitive, but it will be converted to a string, and the keys of the map *must* be strings.  If the value returned from the function is not found in the map, the option with a key of `default` will be used.  No error will be thrown if neither the value nor 'default' exist in the map, the spec will simply continue from the next instruction.
 
-`loop(string, number | ((r:any) => number), Spec)` - repeats the specified Spec the given number of times, either a literal number or a function that returns a number. Specs are returned as a nested entry in the result under the given name.  When writing, loops can also be used, and expects to find data in the same nested structure as would be produced when reading.
+`loop(string, number | ((r:any) => number) | null, Spec)` - repeats the specified Spec the given number of times, either a literal number, a function that returns a number, or `null` to indicate that the loop should continue until the end of the buffer. Specs are returned as a nested entry in the result under the given name.  When writing, loops can also be used, and expects to find data in the same nested structure as would be produced when reading.
 
 For example
 

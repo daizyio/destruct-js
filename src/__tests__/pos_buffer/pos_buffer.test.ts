@@ -578,6 +578,22 @@ describe('padding', () => {
     buffer.read(Bits2);
     expect(() => buffer.read(Int8)).not.toThrowError(new Error('Buffer position is not at a byte boundary (bit offset 0). Do you need to use pad()?'))
   })
+
+  it('can detect the end of the buffer', () => {
+    const buffer = new PosBuffer([0x80, 0x02]);
+
+    buffer.read(Bool);
+    expect(buffer.finished).toBe(false);
+
+    buffer.read(Bits5);
+    expect(buffer.finished).toBe(false);
+
+    buffer.read(Bits2);
+    expect(buffer.finished).toBe(false);
+    
+    buffer.read(Int8);
+    expect(buffer.finished).toBe(true);
+  })
 })
 
 describe('Lenient mode', () => {

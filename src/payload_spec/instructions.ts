@@ -169,31 +169,34 @@ export class LookupInstruction extends ValueProducer {
 }
 // ======
 export class LoopInstruction extends NamedValueProducer {
-  constructor(_name: string, private repeat: number | ((r: any) => number), private loopSpec: Spec) {
+  constructor(_name: string, private repeat: number | ((r: any) => number) | null, private loopSpec: Spec) {
     super(_name, {});
   }
 
   public execute(buffer: PosBuffer, readerState: ReaderState): Array<any> {
-    const repetitions = typeof this.repeat === 'number' ? this.repeat : this.repeat({ ...readerState.result, ...readerState.storedVars })
+    const repetitions = typeof this.repeat === 'number' ? this.repeat : typeof this.repeat === 'function' ? this.repeat({ ...readerState.result, ...readerState.storedVars }) : Number.MAX_SAFE_INTEGER;
 
     if (typeof repetitions !== 'number' || !Number.isInteger(repetitions)) {
       throw new Error('Loop count must be an integer');
     }
 
-    return Array(repetitions).fill(null).map(n => {
+    const result = [];
+    for (let i = 0; i < repetitions && !buffer.finished; i++) {
       const tempState = JSON.parse(JSON.stringify(readerState));
-      return this.loopSpec.exec(buffer, tempState)
-    });
+      result.push(this.loopSpec.exec(buffer, tempState));
+    };
+
+    return result;
   }
 
   public write(buffer: PosBuffer, readerState: ReaderState): void {
-    const repetitions = typeof this.repeat === 'number' ? this.repeat : this.repeat({ ...readerState.result, ...readerState.storedVars })
+    const repetitions = typeof this.repeat === 'number' ? this.repeat : typeof this.repeat === 'function' ? this.repeat({ ...readerState.result, ...readerState.storedVars }) : Number.MAX_SAFE_INTEGER;
 
     if (typeof repetitions !== 'number' || !Number.isInteger(repetitions)) {
       throw new Error('Loop count must be an integer');
     }
 
-    Array(repetitions).fill(null).map((n, i) => {
+    for (let i = 0; i < repetitions; i++) {
       const value: any = readerState.result[this._name];
       const nextContext = Array.isArray(value) ? value[i] : value;
 
@@ -201,7 +204,7 @@ export class LoopInstruction extends NamedValueProducer {
 
       const tempState = JSON.parse(JSON.stringify(nextContext));
       this.loopSpec.write(tempState, buffer)
-    });
+    }
   }
 
   get name() {

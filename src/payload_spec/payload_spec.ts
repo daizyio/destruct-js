@@ -73,7 +73,7 @@ export class Spec {
     return this;
   }
 
-  public loop(name: string, repeat: number | ((r: any) => number), loopSpec: Spec) {
+  public loop(name: string, repeat: number | ((r: any) => number) | null, loopSpec: Spec) {
     this.instructions.push(new LoopInstruction(name, repeat, loopSpec));
     return this;
   }
