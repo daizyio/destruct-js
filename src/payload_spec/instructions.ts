@@ -32,9 +32,6 @@ export abstract class NamedValueProducer extends ValueProducer {
 
     const combinedState = { ...readerState.result, ...readerState.storedVars};
 
-    if (this.options.before) {
-      console.log('Have a before option');
-    }
     return {
       size: this.resolveOption(this.options.size, combinedState),
       terminator: this.options.terminator,
