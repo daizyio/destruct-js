@@ -1,6 +1,6 @@
 import { Spec } from '../../payload_spec/payload_spec';
 import { Mode } from '../../pos_buffer/pos_buffer';
-import { UInt8, Int8, UInt16, Float, UInt32, Text, Bit, Bool, Bits3, Bits5, Bits2, Bits8 } from '../../pos_buffer/types';
+import { UInt8, Int8, UInt16, Float, UInt32, Text, Bit, Bool, Bits3, Bits5, Bits2, Bits8, Bytes } from '../../pos_buffer/types';
 import '../matchers';
 
 describe('Simple fields', () => {
@@ -52,6 +52,17 @@ describe('Simple fields', () => {
     expect(result.count).toBe(255);
     expect(result.temp).toBe(2);
     expect(result.optional).toBeUndefined();
+  });
+
+  it('can read raw bytes', () => {
+    const spec = new Spec()
+      .field('bytes', Bytes, { size: 3 })
+      .field('int', UInt8);
+
+    const result = spec.exec(Buffer.from([0x01, 0x02, 0x03, 0x04, 0x05]));
+
+    expect(result.bytes).toBeHex('010203');
+    expect(result.int).toBe(4);
   })
 });
 describe('skip', () => {

@@ -113,19 +113,17 @@ export class Double extends NumericDataType {
   public bitSize = () => 64;
 }
 
-export class Text extends DataType {
+export class Bytes extends DataType {
   private _size: number;
   private terminator: number | undefined;
-  private encoding: Encoding;
 
   constructor(options?: any) {
     super(options);
     this._size = options?.size;
-    this.encoding = options?.encoding || 'utf8';
     this.terminator = this.convertTerminator(options?.terminator);
   }
 
-  public execute(posBuffer: PosBuffer) {
+  public execute(posBuffer: PosBuffer): Primitive {
     const startingBuffer = posBuffer.buffer.slice(posBuffer.offset.bytes);
     let workingBuffer: Buffer = startingBuffer;
     if (this._size) {
@@ -139,22 +137,22 @@ export class Text extends DataType {
     } else {
       this._size = workingBuffer.length;
     }
-    return workingBuffer.toString(this.encoding);
+    return workingBuffer;
   }
 
-  public write(buffer: PosBuffer, value: string): Buffer {
-    const substring = this._size ? value.substring(0, this._size) : value;
-    const returnBuffer = Buffer.from(substring, this.encoding);
+  public write(buffer: PosBuffer, value: Buffer): Buffer {
+    if (this._size) {
+      value = value.slice(0, this._size);      
+    }
 
     if (typeof this.terminator !== 'undefined') {
-      const terminatedBuffer = Buffer.concat([returnBuffer, Buffer.from([this.terminator])]);
+      const terminatedBuffer = Buffer.concat([value, Buffer.from([this.terminator])]);
       this._size = terminatedBuffer.length;
       return terminatedBuffer;
     } else {
-      this._size = returnBuffer.length;
-      return returnBuffer;
+      this._size = value.length;
+      return value;
     }
-    
   }
 
   get size() {
@@ -172,6 +170,36 @@ export class Text extends DataType {
       return undefined;
     }
   }
+}
+
+export class Text extends DataType {
+  private encoding: Encoding;
+  private _size: number;
+  private byteType: Bytes;
+
+  constructor(options: any) {
+    super(options);
+    this._size = options?.size;
+    this.encoding = options?.encoding || 'utf8';
+    this.byteType = new Bytes(options);
+  }
+
+  public execute(buffer: PosBuffer): Primitive {
+    const fetchedBuffer: Buffer = this.byteType.execute(buffer) as Buffer;
+    this._size = fetchedBuffer.length;
+    return fetchedBuffer.toString(this.encoding);
+  }
+
+  public write(posBuffer: PosBuffer, value: string): Buffer {
+    const stringBuffer = Buffer.from(value, this.encoding);
+
+    return this.byteType.write(posBuffer, stringBuffer);
+  }
+
+  get size() {
+    return this.byteType.size;
+  }
+
 }
 
 export abstract class Bits extends DataType {

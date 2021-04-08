@@ -1,5 +1,5 @@
 import { PosBuffer, Mode } from '../../pos_buffer/pos_buffer';
-import { UInt8, Int8, Int16, UInt16, Int32, UInt32, Float, Double, Text, Bool, Bit, Bits10, Bits11, Bits12, Bits13, Bits14, Bits15, Bits16, Bits2, Bits3, Bits4, Bits5, Bits6, Bits7, Bits8, Bits9 } from '../../pos_buffer/types';
+import { UInt8, Int8, Int16, UInt16, Int32, UInt32, Float, Double, Text, Bool, Bit, Bits10, Bits11, Bits12, Bits13, Bits14, Bits15, Bits16, Bits2, Bits3, Bits4, Bits5, Bits6, Bits7, Bits8, Bits9, Bytes } from '../../pos_buffer/types';
 import '../matchers';
 
 describe('Constructing a PosBuffer', () => {
@@ -321,6 +321,13 @@ describe('Text', () => {
     expect(buffer).toBeHex('626F6200');
   });
 
+  it('truncates to size', () => {
+    const buffer = new PosBuffer([]);
+
+    buffer.write(Text, 'bobalobacus', { size: 3 })
+    expect(buffer).toBeHex('626F62');
+  });
+
   it('can specify a char terminator', () => {
     const buffer = new PosBuffer([0x62, 0x6f, 0x62, 0x3B, 0x32]);
 
@@ -360,6 +367,53 @@ describe('Text', () => {
   });
 });
 
+describe('Bytes', () => {
+  describe('read', () => {
+    it('reads a field as a raw byte buffer', () => {
+      const buffer = new PosBuffer([0x32, 0x62, 0x6f, 0x62, 0x62, 0x6f, 0x62]);
+  
+      expect(buffer.read(Bytes, { size: 3 })).toBeHex('32626F');
+    });
+  
+    it('reads to the end of the buffer if no size or terminator', () => {
+      const buffer = new PosBuffer([0x32, 0x62, 0x6f, 0x62, 0x62, 0x6f, 0x62]);
+  
+      expect(buffer.read(Bytes)).toBeHex('32626F62626F62');
+    });
+  
+    it('can specify a terminator', () => {
+      const buffer = new PosBuffer([0x32, 0x62, 0x6f, 0x62, 0x62, 0x6f, 0x62]);
+  
+      expect(buffer.read(Bytes, { terminator: 0x6f })).toBeHex('3262');
+    });
+  });
+
+  describe('write', () => {
+    it('can write bytes to the buffer', () => {
+      const buffer = new PosBuffer([]);
+
+      buffer.write(Bytes, Buffer.from([0x01, 0x02, 0x03]));
+
+      expect(buffer).toBeHex('010203');
+    })
+
+    it('truncates to size if option specified', () => {
+      const buffer = new PosBuffer([]);
+
+      buffer.write(Bytes, Buffer.from([0x01, 0x02, 0x03]), { size: 2 });
+
+      expect(buffer).toBeHex('0102');
+    });
+
+    it('writes a terminator if option specified', () => {
+      const buffer = new PosBuffer([]);
+
+      buffer.write(Bytes, Buffer.from([0x01, 0x02, 0x03]), { size: 2, terminator: 0x00 });
+
+      expect(buffer).toBeHex('010200');
+    });
+  });
+})
 
 describe('Bool', () => {
   it('retrieves a single bit from the field as a boolean', () => {
