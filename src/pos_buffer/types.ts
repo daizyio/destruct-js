@@ -1,13 +1,14 @@
+import { Primitive } from '../payload_spec/instructions';
 import { PosBuffer, Encoding, Mode, TypeOptions } from './pos_buffer';
 
 export abstract class DataType {
 
   constructor(protected options?: TypeOptions) {}
 
-  abstract execute(buffer: PosBuffer): number | string | boolean;
+  abstract execute(buffer: PosBuffer): Primitive;
   abstract size: number;
 
-  public write(buffer: PosBuffer, value: number | string | boolean): Buffer {
+  public write(buffer: PosBuffer, value: Primitive): Buffer {
     return Buffer.from([]);
   }
 }
@@ -182,7 +183,7 @@ export abstract class Bits extends DataType {
     this._size = options.size;
   }
 
-  execute(buffer: PosBuffer): string | number | boolean {
+  execute(buffer: PosBuffer): Primitive {
     const bytesToRead = Math.ceil((buffer.offset.bits + this._size) / 8);
     const value = buffer.buffer.readUIntBE(buffer.offset.bytes, bytesToRead);
 
@@ -212,7 +213,7 @@ export class Bool extends Bits {
     super({...options, size: 1} )
   }
 
-  execute(buffer: PosBuffer): string | number | boolean {
+  execute(buffer: PosBuffer): Primitive {
     const value = super.execute(buffer);
     return value === 1;
   }

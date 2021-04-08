@@ -18,7 +18,7 @@ export class PosBuffer {
     this.offsetBits = options?.offset?.bits || 0;
   }
 
-  public read(dataType: DataTypeCtor, options?: TypeOptions): string | number | boolean | undefined {
+  public read(dataType: DataTypeCtor, options?: TypeOptions): Primitive | undefined {
     if (this.offsetBytes > this._buffer.length - 1) {
       if (this.options.lenient) {
         return undefined;
@@ -40,7 +40,7 @@ export class PosBuffer {
     return thennedValue;
   }
 
-  public write(dataType: DataTypeCtor, value: string | number | boolean, options?: TypeWriteOptions): Buffer {
+  public write(dataType: DataTypeCtor, value: Primitive, options?: TypeWriteOptions): Buffer {
     const transformedValue = (options?.before) ? options?.before(value) : value;
     const dataInstruction = new dataType(options);
     const newBuffer = dataInstruction.write(this, transformedValue);
@@ -53,7 +53,7 @@ export class PosBuffer {
     return newBuffer;
   }
 
-  public readMany(dataTypes: { type: DataTypeCtor, options?: TypeOptions }[]): (string | number | boolean | undefined)[] {
+  public readMany(dataTypes: { type: DataTypeCtor, options?: TypeOptions }[]): (Primitive | undefined)[] {
     return dataTypes.map((dt) => {
       return this.read(dt.type, dt.options);
     })
@@ -71,7 +71,7 @@ export class PosBuffer {
     return this;
   }
 
-  public peek(instruction: new (options?: any) => DataType, byteOffset: number, options?: TypeOptions): string | number | boolean {
+  public peek(instruction: new (options?: any) => DataType, byteOffset: number, options?: TypeOptions): Primitive {
     const dataInstruction = new instruction(options);
     if (byteOffset < 0 || (byteOffset + this.addOffset(dataInstruction.size).bytes) > this._buffer.length ) {
       throw new Error('Attempt to peek outside of the buffer');

@@ -3,7 +3,7 @@ import { TypeOptions } from '../pos_buffer/pos_buffer';
 
 export type Predicate = (r: any) => boolean;
 export type ValueProvider = (r: any) => Primitive;
-export type Primitive = number | string | boolean;
+export type Primitive = number | string | boolean | Buffer;
 
 export interface Instruction<T> {
   execute(buffer: PosBuffer, readerState: ReaderState): T | undefined;
@@ -60,7 +60,7 @@ export abstract class NamedValueProducer extends ValueProducer {
 // ======  VALUE PRODUCERS ====
 
 export class Value extends NamedValueProducer {
-  private _shouldBe: string | number | boolean | null;
+  private _shouldBe: Primitive | null;
 
   constructor(_name: string, private Type: DataTypeCtor, options: FieldOptions | undefined) {
     super(_name, options);
