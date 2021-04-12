@@ -110,18 +110,32 @@ expect(result.frequency).toBe(9);
 expect(result.days).toBe(19);
 ```
 
-Text
----
+Bytes & Text
+===
 
-You can read and write text from/to the Buffer using the `Text` data type. You can specify a fixed size with the `size` option.
+The `Bytes` data type will simply return a Buffer. This is useful if you need to deal with groups of bytes in odd or larger numbers. You can specify the number of bytes to read with the `size` option.
 
 ```
 const result = 
   new Spec()
-    .field('name', Text, { size: 3 })
-    .read(Buffer.from([0x62, 0x6f, 0x62]));
+    .field('nameBytes', Bytes, { size: 3 })
+    .read(Buffer.from([0x61, 0x62, 0x63, 0x64]));
+
+expect(result.nameBytes.toString('hex')).toBe('616263');
+```
+
+
+`Text` is a specific implementation of `Bytes` that will handle encoding as well. You can specify the encoding with the `encoding` option, default is `utf-8`. Note that `size` is still the number of bytes to read/write, not code points.
+
+```
+const result = 
+  new Spec()
+    .field('name', Text, { size: 3, encoding: 'utf-8' })
+    .field('multiByte', Text, { size: 3, encoding: 'utf-8' })
+    .read(Buffer.from([0x62, 0x6f, 0x62, 0xE3, 0x83, 0xA6]));
 
 expect(result.name).toBe('bob');
+expect(result.multiByte).toBe('ユ');
 ```
 
 If the size is determined dynamically, you can pass a function to the size parameter that will resolve a value from the result map
@@ -158,7 +172,7 @@ const result =
 expect(result.name).toBe('bob123');
 ```
 
-When writing, the `size` option will truncate the text to the appropriate size, and the `terminator` will be added to the end.
+When writing, the `size` option will truncate the text to the appropriate size (again, in bytes, not code points), and the `terminator` will be added to the end.
 
 ```
 const result = 
