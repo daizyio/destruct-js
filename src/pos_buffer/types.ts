@@ -57,7 +57,7 @@ export class UInt8 extends NumericDataType {
   public bitSize = () => 8;
 }
 
-export class Int8 extends NumericDataType {  
+export class Int8 extends NumericDataType {
   public be = Buffer.prototype.readInt8;
   public le = Buffer.prototype.readInt8;
   public writeBe = Buffer.prototype.writeInt8;
@@ -142,7 +142,7 @@ export class Bytes extends DataType {
 
   public write(buffer: PosBuffer, value: Buffer): Buffer {
     if (this._size) {
-      value = value.slice(0, this._size);      
+      value = value.slice(0, this._size);
     }
 
     if (typeof this.terminator !== 'undefined') {
@@ -202,7 +202,7 @@ export class Text extends DataType {
 
 }
 
-export abstract class Bits extends DataType {
+export class Bits extends DataType {
 
   private _size: number;
 
@@ -227,7 +227,7 @@ export abstract class Bits extends DataType {
     const startPos = buffer.offset.bits;
     for (let i = 0; i < this._size; i++) {
       buffer.flipBits((startPos + i) % 8, (numValue >> (this._size - i - 1)) & 0x1);
-    }    
+    }
     return Buffer.from([]);
   }
 

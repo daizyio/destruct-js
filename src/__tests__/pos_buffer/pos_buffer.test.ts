@@ -1,5 +1,5 @@
 import { PosBuffer, Mode } from '../../pos_buffer/pos_buffer';
-import { UInt8, Int8, Int16, UInt16, Int32, UInt32, Float, Double, Text, Bool, Bit, Bits10, Bits11, Bits12, Bits13, Bits14, Bits15, Bits16, Bits2, Bits3, Bits4, Bits5, Bits6, Bits7, Bits8, Bits9, Bytes } from '../../pos_buffer/types';
+import { UInt8, Int8, Int16, UInt16, Int32, UInt32, Float, Double, Text, Bool, Bit, Bits10, Bits11, Bits12, Bits13, Bits14, Bits15, Bits16, Bits2, Bits3, Bits4, Bits5, Bits6, Bits7, Bits8, Bits9, Bytes, Bits } from '../../pos_buffer/types';
 import '../matchers';
 
 describe('Constructing a PosBuffer', () => {
@@ -181,52 +181,52 @@ describe('Numeric types', () => {
 describe('Floating point numbers', () => {
   it('reads a signed float', () => {
     const buffer = new PosBuffer([0x40, 0x49, 0x0F, 0xD0]);
-    
+
     expect(buffer.read(Float)).toBe(3.141590118408203);
   });
 
   it('writes a signed float BE', () => {
     const buffer = new PosBuffer([]);
-    
+
     buffer.write(Float, 3.141590118408203);
     expect(buffer).toBeHex('40490FD0');
   });
 
   it('reads a signed float LE', () => {
     const buffer = new PosBuffer([0xD0, 0x0F, 0x49, 0x40], { endianness: Mode.LE });
-    
+
     expect(buffer.read(Float)).toBe(3.141590118408203);
   });
 
   it('writes a signed float LE', () => {
     const buffer = new PosBuffer([], { endianness: Mode.LE });
-    
+
     buffer.write(Float, 3.141590118408203);
     expect(buffer).toBeHex('D00F4940');
   });
 
   it('reads a signed double BE', () => {
     const buffer = new PosBuffer([0x40, 0x09, 0x21, 0xCA, 0xC0, 0x83, 0x12, 0x6F]);
-    
+
     expect(buffer.read(Double)).toBe(3.14150000000000018118839761883E0);
   });
 
   it('reads a signed double LE', () => {
     const buffer = new PosBuffer([0x6F, 0x12, 0x83, 0xC0, 0xCA, 0x21, 0x09, 0x40], { endianness: Mode.LE });
-    
+
     expect(buffer.read(Double)).toBe(3.14150000000000018118839761883E0);
   });
 
   it('writes a signed double BE', () => {
     const buffer = new PosBuffer([]);
-    
+
     buffer.write(Double, 3.14150000000000018118839761883E0);
     expect(buffer).toBeHex('400921CAC083126F');
   });
 
   it('writes a signed double LE', () => {
     const buffer = new PosBuffer([], { endianness: Mode.LE });
-    
+
     buffer.write(Double, 3.14150000000000018118839761883E0);
     expect(buffer).toBeHex('6F1283C0CA210940');
   });
@@ -270,13 +270,13 @@ describe('Text', () => {
 
   it('uses utf8 by default', () => {
     const buffer = new PosBuffer([0xE3, 0x83, 0xA6, 0xE3, 0x83, 0x8B, 0xE3, 0x82, 0xB3, 0xE3, 0x83, 0xBC, 0xE3, 0x83, 0x89]);
-    
+
     expect(buffer.read(Text, { size: 15 })).toBe('ユニコード');
   });
 
   it('writes utf8 by default', () => {
     const buffer = new PosBuffer([]);
-    
+
     buffer.write(Text, 'ユニコード');
     expect(buffer).toBeHex('E383A6E3838BE382B3E383BCE38389');
   });
@@ -342,7 +342,7 @@ describe('Text', () => {
     expect(buffer).toBeHex('626F623B');
   });
 
-  it('includes terminator in offset', () => {    
+  it('includes terminator in offset', () => {
     const buffer = new PosBuffer([0x31, 0x00, 0x32, 0x00, 0x33, 0x00]);
 
     expect(buffer.read(Text, { terminator: 0x00 })).toBe('1');
@@ -355,7 +355,7 @@ describe('Text', () => {
 
     expect(buffer.read(Int8)).toBe(50);
     expect(buffer.read(Text)).toBe('bobbob');
-    
+
   });
 
   it('sets size if reading to end of buffer', () => {
@@ -371,19 +371,19 @@ describe('Bytes', () => {
   describe('read', () => {
     it('reads a field as a raw byte buffer', () => {
       const buffer = new PosBuffer([0x32, 0x62, 0x6f, 0x62, 0x62, 0x6f, 0x62]);
-  
+
       expect(buffer.read(Bytes, { size: 3 })).toBeHex('32626F');
     });
-  
+
     it('reads to the end of the buffer if no size or terminator', () => {
       const buffer = new PosBuffer([0x32, 0x62, 0x6f, 0x62, 0x62, 0x6f, 0x62]);
-  
+
       expect(buffer.read(Bytes)).toBeHex('32626F62626F62');
     });
-  
+
     it('can specify a terminator', () => {
       const buffer = new PosBuffer([0x32, 0x62, 0x6f, 0x62, 0x62, 0x6f, 0x62]);
-  
+
       expect(buffer.read(Bytes, { terminator: 0x6f })).toBeHex('3262');
     });
   });
@@ -475,7 +475,7 @@ describe('Bit', () => {
 
     expect(buffer).toBeHex('80');
   })
-  
+
   it('can read multiple bits in a row', () => {
     const buffer = new PosBuffer([0xA0]);
 
@@ -530,6 +530,20 @@ describe('Bits', () => {
     expect(buffer.read(UInt8)).toBe(255);
   });
 
+
+  it('can read arbitrary bits', async () => {
+    const buffer = new PosBuffer([0xA5, 0x32, 0x7F, 0xC3, 0x77, 0xFF]);
+
+    expect(buffer.read(Bits, { size: 2 })).toBe(2);
+    expect(buffer.read(Bits, { size: 3 })).toBe(4);
+    expect(buffer.read(Bits, { size: 4 })).toBe(10);
+    expect(buffer.read(Bits, { size: 30 })).toBe(423616955);
+
+    buffer.pad();
+    expect(buffer.read(UInt8)).toBe(255);
+
+  });
+
   it('can write bits', () => {
     const buffer = new PosBuffer([]);
 
@@ -556,7 +570,7 @@ describe('Bits', () => {
 describe('Chained operations', () => {
   it('can read multiple values in succession', () => {
     const buffer = new PosBuffer([0xFF, 0xFF, 0xAE, 0xC4, 0xAE, 0xC4, 0xAE, 0xC4, 0x45, 0xFA, 0xAE, 0xC4, 0x45, 0xFA, 0x40, 0x49, 0x0F, 0xD0, 0x40, 0x09, 0x21, 0xCA, 0xC0, 0x83, 0x12, 0x6F]);
-    
+
     expect(buffer.read(UInt8)).toBe(255);
     expect(buffer.read(Int8)).toBe(-1);
     expect(buffer.read(Int16)).toBe(-20796);
@@ -569,7 +583,7 @@ describe('Chained operations', () => {
 
   it('can write multiple values in succession', () => {
     const buffer = new PosBuffer([]);
-    
+
     buffer.write(UInt8, 255);
     buffer.write(Int8, -1);
     buffer.write(Int16, -20796);
@@ -600,14 +614,14 @@ describe('before', () => {
 })
 
 describe('padding', () => {
-  it('can be used to align to the byte boundary', () => {    
+  it('can be used to align to the byte boundary', () => {
     const buffer = new PosBuffer([0x80, 0x02]);
     expect(buffer.read(Bool)).toBe(true);
     buffer.pad();
     expect(buffer.read(Int8)).toBe(2);
   });
 
-  it('can be used to align to the byte boundary for writing', () => {    
+  it('can be used to align to the byte boundary for writing', () => {
     const buffer = new PosBuffer([]);
 
     buffer.write(Bool, true);
@@ -624,7 +638,7 @@ describe('padding', () => {
     expect(() => buffer.read(Int8)).toThrowError(new Error('Buffer position is not at a byte boundary (bit offset 1). Do you need to use pad()?'))
   })
 
-  it('does not error if previous bits add up to byte boundary', () => {    
+  it('does not error if previous bits add up to byte boundary', () => {
     const buffer = new PosBuffer([0x80, 0x02]);
 
     buffer.read(Bool);
@@ -644,7 +658,7 @@ describe('padding', () => {
 
     buffer.read(Bits2);
     expect(buffer.finished).toBe(false);
-    
+
     buffer.read(Int8);
     expect(buffer.finished).toBe(true);
   })
@@ -682,9 +696,9 @@ describe('Skipping', () => {
     const buffer = new PosBuffer([0xAE, 0xC4, 0x00, 0xC5, 0x33]);
 
     expect(buffer.read(UInt16)).toBe(44740);
-    
+
     buffer.skip(1);
-    
+
     expect(buffer.read(UInt16)).toBe(50483);
   })
 
@@ -702,7 +716,7 @@ describe('Skipping', () => {
     const buffer = new PosBuffer([0xAE, 0xC4, 0x00, 0xC5, 0x33]);
 
     expect(buffer.read(UInt16)).toBe(44740);
-    
+
     expect(buffer.skip(1).read(UInt16)).toBe(50483);
   })
 
@@ -771,13 +785,13 @@ describe('Peeking', () => {
 describe('Buffer methods', () => {
   test('length returns the length of the underlying buffer', () => {
     const buffer = new PosBuffer([0xFF, 0xFE, 0xFD, 0xFC, 0xFB, 0xFA]);
-    
+
     expect(buffer.length).toBe(6);
   })
 
   test('slice returns a PosBuffer with a slice of the underlying array', () => {
     const buffer = new PosBuffer([0xFF, 0xFE, 0xFD, 0xFC, 0xFB, 0xFA]);
-    
+
     const newBuffer = buffer.slice(2);
 
     expect(newBuffer.read(UInt8)).toBe(253);
@@ -840,4 +854,4 @@ describe('Read many', () => {
       expect(value).toBe(i + 1);
     }
   })
-})
+});

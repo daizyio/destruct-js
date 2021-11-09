@@ -3,7 +3,7 @@
 destruct-js
 ===========
 
-destruct-js is a Javascript library for reading and writing binary data from Buffers using a declarative specification, inspired by [construct-js](https://github.com/francisrstokes/construct-js). 
+destruct-js is a Javascript library for reading and writing binary data from Buffers using a declarative specification, inspired by [construct-js](https://github.com/francisrstokes/construct-js).
 
 Usage
 ===
@@ -62,7 +62,7 @@ Numeric data types will read a number from the buffer with the specified size. A
 Numeric types also support an additional `dp` configuration, which limits the number of decimal places, either on values directly from the Buffer (for `Float` or `Double` types) or produced from a `then` option.  All numeric types can also take a `mode` configuration to read a single field in a different mode to the rest of the buffer.
 
 ```
-const result: any = 
+const result: any =
   new Spec()
     .field('count3dp', Float, { dp: 3 })
     .field('count1dp', Float, { dp: 1 })
@@ -78,7 +78,7 @@ Bool
 The `Bool` type reads a single bit from the buffer, as a boolean value
 
 ```
-const result = 
+const result =
     new Spec()
       .field('enabled', Bool)
       .field('ledOff', Bool)
@@ -93,15 +93,15 @@ expect(result.releaseTheHounds).toBe(true);
 Bit, Bits[2-16]
 ---
 
-The `Bit` type reads a single bit from the buffer, as a 0 or 1.  The types `Bits2` through to `Bits16` read the corresponding number of bits and returns them as unsigned integers. Note that this reads across byte boundaries where necessary.  This means that, for example, `Bits8` is *not* the same as `UInt8`, which will throw an error if trying to read/write when not aligned to a byte boundary.
+The `Bit` type reads a single bit from the buffer, as a 0 or 1.  The types `Bits2` through to `Bits16` read the corresponding number of bits and returns them as unsigned integers. These are aliases for the `Bits` type with a `size` option, that can be used to read arbitrary sizes. Note that this reads across byte boundaries where necessary. This means that, for example, `Bits8` is *not* the same as `UInt8`, which will throw an error if trying to read/write when not aligned to a byte boundary.
 
 ```
-const result = 
+const result =
   new Spec()
     .field('enabled', Bit)
     .field('mode', Bits2)
     .field('frequency', Bits4)
-    .field('days', Bits5)
+    .field('days', Bits, { size: 5})  // same as Bits5
     .read(Buffer.from([0xD3, 0x3A]));
 
 expect(result.enabled).toBe(1);
@@ -116,7 +116,7 @@ Bytes & Text
 The `Bytes` data type will simply return a Buffer. This is useful if you need to deal with groups of bytes in odd or larger numbers. You can specify the number of bytes to read with the `size` option.
 
 ```
-const result = 
+const result =
   new Spec()
     .field('nameBytes', Bytes, { size: 3 })
     .read(Buffer.from([0x61, 0x62, 0x63, 0x64]));
@@ -128,7 +128,7 @@ expect(result.nameBytes.toString('hex')).toBe('616263');
 `Text` is a specific implementation of `Bytes` that will handle encoding as well. You can specify the encoding with the `encoding` option, default is `utf-8`. Note that `size` is still the number of bytes to read/write, not code points.
 
 ```
-const result = 
+const result =
   new Spec()
     .field('name', Text, { size: 3, encoding: 'utf-8' })
     .field('multiByte', Text, { size: 3, encoding: 'utf-8' })
@@ -141,7 +141,7 @@ expect(result.multiByte).toBe('ユ');
 If the size is determined dynamically, you can pass a function to the size parameter that will resolve a value from the result map
 
 ```
-const result = 
+const result =
   new Spec()
     .field('nameSize', UInt8)
     .field('name', Text, { size: r => r.nameSize })
@@ -153,7 +153,7 @@ expect(result.name).toBe('bob');
 or a terminator character:
 
 ```
-const result = 
+const result =
   new Spec()
     .field('name', Text, { terminator: 0x00 })
     .read(Buffer.from([0x62, 0x6f, 0x62, 0x00, 0x31, 0x32, 0x33]));
@@ -164,7 +164,7 @@ expect(result.name).toBe('bob');
 or by default it will run to the end of the buffer:
 
 ```
-const result = 
+const result =
   new Spec()
     .field('name', Text)
     .read(Buffer.from([0x62, 0x6f, 0x62, 0x31, 0x32, 0x33]));
@@ -175,7 +175,7 @@ expect(result.name).toBe('bob123');
 When writing, the `size` option will truncate the text to the appropriate size (again, in bytes, not code points), and the `terminator` will be added to the end.
 
 ```
-const result = 
+const result =
   new Spec()
     .field('name', Text, { size: 3, terminator: 0x00 })
     .write({ name: 'bobalobacus' })
@@ -210,7 +210,7 @@ These options apply to any data type, in addition to the type specific options n
 `before: (any) => any` - All data types support a `before` option to do some pre processing on the value when writing. The `before` option should be a function that takes the value read from the data object, and outputs a value, which may or may not be of the same type, to write to the buffer.
 
 ```
-const result = 
+const result =
   new Spec()
     .field('numericText', Text, { size: 3, then: parseInt })
     .field('temperature', UInt8, { then: (f) => (f - 32) * (5/9), before: (c) => (c * 9/5) + 32 })
@@ -224,7 +224,7 @@ expect(result.temperature).toBe(100);
 `shouldBe: (string | number | boolean)` - All data types support a `shouldBe` option, that can be used to assert that a particular value should be fixed.  For example, you might use this to check that a particular delimiter is present.  If the value read from the buffer does not match the expected value, an `Error` will be thrown.  `shouldBe` also applies when writing, and validates that the value in the object passed for writing matches the expected value.
 
 ```
-const result = 
+const result =
   new Spec()
     .field('javaClassIdentifier', UInt32, { shouldBe: 0xCAFEBABE })
     .read(Buffer.from([0xCA, 0xFE, 0xBA, 0xBE]))
@@ -243,7 +243,7 @@ Internally, the spec maintains a result object, and also another map of intermed
 `store(name: string, type: DataType)` - fetches a value from the buffer in the same way as `.field()`, but stores the value internally instead of adding to the final output. `.store()` can be used in combination with `.derive()` to use values in later calculations.  When writing, `store` instructions apply in the same way as `field` instructions - their value is written to the buffer.
 
 ```
-const result = 
+const result =
   new Spec()
     .field('firstByte', UInt8)
     .store('ignoreMe', UInt8)
@@ -271,7 +271,7 @@ Control Flow
 
 You can conditionally parse parts of the buffer using some control statements that mirror standard JS.
 
-`include(spec: Spec)` - executes the specified `Spec`, and stores results at (or reads data from) the current level in the result object.  All state in the original spec (variables, position etc.) is passed to the new spec, and control and state is returned to the original spec once the new spec (and any specs executed within that) are completed. 
+`include(spec: Spec)` - executes the specified `Spec`, and stores results at (or reads data from) the current level in the result object.  All state in the original spec (variables, position etc.) is passed to the new spec, and control and state is returned to the original spec once the new spec (and any specs executed within that) are completed.
 
 `group(name: string, spec: Spec)` - executes the specified `Spec`,  but stores results under (or reads data from) the specified key in the result object.
 
@@ -312,7 +312,7 @@ For example
 
 ```
 // Reading
- const loopSpec = 
+ const loopSpec =
       new Spec()
         .loop('level1', 2, new Spec()
           .field('l1Size', UInt8)
@@ -332,7 +332,7 @@ For example
           ]
         },
         {
-          l1Size: 3, 
+          l1Size: 3,
           level2: [
             { l2Value: 16 },
             { l2Value: 17 },
@@ -356,12 +356,12 @@ When parsing the buffer, you may need to explicitly set the current position
 `skip(bytes: number | NumericDataType)` - skips the specified number of bytes, or the size of the specified numeric data type.  When writing, skipped bytes will be filled with zeroes.
 
 ```
-const spec = 
+const spec =
   new Spec()
     .field('firstByte', UInt8)
     .skip(UInt16)               // same as .skip(2)
     .field('lastByte', UInt8)
-    
+
 const result = spec.read(Buffer.from([0xFF, 0xAB, 0xCD, 0x01]));
 
 expect(result.firstByte).toBe(255);
@@ -389,13 +389,13 @@ expect(result.count).toBe(2);
 `endianness(mode: Mode)` - switches the buffer to reading/writing the specified endianness *from this point* i.e. it does not apply to previously read values.
 
 ```
-const result = 
+const result =
   new Spec({ mode: Mode.BE })
     .field('countBE', UInt16)
     .endianness(Mode.LE)
     .field('countLE', UInt16)
     .read(Buffer.from([0xFF, 0x30, 0x30, 0xFF, 0xFF, 0x30]))
-  
+
 expect(result.countBE).toBe(65328);
 expect(result.countLE).toBe(65328);
 ```
@@ -403,7 +403,7 @@ expect(result.countLE).toBe(65328);
 Extras
 ===
 
-`tap((Buffer, ReaderState) => void)` - use `.tap()` to perform some action at some point in the parsing/writing, such as printing something to the console for debug purposes.  The buffer is a `PosBuffer` which has an `offset` property that you can use to check the current position in the buffer.  The `offset.bytes` property gives the position in bytes, and the `offset.bits` property gives a bit offset within the current byte, if `Bit`s or `Bool`s have been read.  The `ReaderState` contains the current `result` i.e. any data from a `field` or `derive` statement, and also `storedVars` for any `store` operations i.e. data that has been fetched/calculated but will not appear in the final result.  
+`tap((Buffer, ReaderState) => void)` - use `.tap()` to perform some action at some point in the parsing/writing, such as printing something to the console for debug purposes.  The buffer is a `PosBuffer` which has an `offset` property that you can use to check the current position in the buffer.  The `offset.bytes` property gives the position in bytes, and the `offset.bits` property gives a bit offset within the current byte, if `Bit`s or `Bool`s have been read.  The `ReaderState` contains the current `result` i.e. any data from a `field` or `derive` statement, and also `storedVars` for any `store` operations i.e. data that has been fetched/calculated but will not appear in the final result.
 
 Note that both the `Buffer` and `ReaderState` are mutable - by changing them you may either wield great power or wreak great havoc.  For example, you could insert values manually into the result map when reading, or to the buffer when writing.
 
