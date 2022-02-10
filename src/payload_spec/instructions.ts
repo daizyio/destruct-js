@@ -70,7 +70,7 @@ export class Value extends NamedValueProducer {
   execute(buffer: PosBuffer, readerState: ReaderState): Primitive | undefined {
     const value = buffer.read(this.Type, this.resolveOptions(readerState));
     this.check(value);
-    
+
     return value;
   }
 
@@ -149,9 +149,11 @@ export class LookupInstruction extends ValueProducer {
 
     if (otherSpec) {
       return otherSpec.exec(buffer);
+    } else {
+      throw new Error(`Invalid value for switch: ${value}`);
     }
   }
-  
+
   public write(buffer: PosBuffer, readerState: ReaderState): void {
     const value = this.valueProvider({ ...readerState.result, ...readerState.storedVars });
 
@@ -277,7 +279,7 @@ export class PadInstruction extends NullInstruction {
 // ======
 export class TapInstruction extends NullInstruction {
   constructor(private callback: (buffer: PosBuffer, readerState: ReaderState) => void) {
-   super(); 
+   super();
   }
 
   public execute(buffer: PosBuffer, readerState: ReaderState): void {

@@ -8,7 +8,7 @@ export interface FieldOptions {
   before?: (v: any) => Primitive;
   shouldBe?: Primitive;
   size?: number | ((v: any) => number);
-  encoding?: Encoding; 
+  encoding?: Encoding;
   value?: Primitive;
   store?: boolean;
   mode?: Mode;
@@ -57,7 +57,7 @@ export class Spec {
     return this;
   }
 
-  
+
   public switch(valueProvider: ValueProvider, valueMap: {[k: string]: Spec}) {
     this.instructions.push(new LookupInstruction(valueProvider, valueMap));
     return this;
@@ -102,7 +102,7 @@ export class Spec {
     const posBuffer = data instanceof PosBuffer ? data : new PosBuffer(data, { endianness: this.options.mode, lenient: this.options.lenient });
 
     const reader = new BufferReader(posBuffer, this.instructions);
-  
+
     return reader.read(initialState);
   }
 
@@ -118,7 +118,7 @@ export class Spec {
 class BufferReader {
   constructor(private posBuffer: PosBuffer, private instructions: Instruction<any>[]) {
   }
-  
+
   public read(state: ReaderState = { result: {}, storedVars: {} }): any {
     const result: {[k:string]: any} = {};
 
@@ -139,7 +139,7 @@ class BufferReader {
         instruction.execute(this.posBuffer, state);
       }
       Object.assign(state.result, result);
-    } 
+    }
 
     return result;
   }
@@ -147,7 +147,7 @@ class BufferReader {
 
 class BufferWriter {
   constructor(private posBuffer: PosBuffer, private instructions: Instruction<any>[]) { }
-  
+
   public write(data: any): Buffer {
     for(const instruction of this.instructions) {
       instruction.write(this.posBuffer, { result: data, storedVars: {} });

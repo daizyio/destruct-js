@@ -27,7 +27,7 @@ describe('Simple fields', () => {
 
     expect(result.count).toBe(767);
   });
-  
+
   it('writes fields in order to the buffer', () => {
     const spec = new Spec();
 
@@ -68,7 +68,7 @@ describe('Simple fields', () => {
 describe('skip', () => {
   it('skips a number of bytes', () => {
     const spec = new Spec();
-    
+
     spec.field('count', UInt8)
         .skip(1)
         .field('temp', UInt8)
@@ -84,7 +84,7 @@ describe('skip', () => {
 
   it('skips the size of the passed data type', () => {
     const spec = new Spec();
-    
+
     spec.field('count', UInt8)
         .skip(Int8)
         .field('temp', UInt8)
@@ -101,18 +101,18 @@ describe('skip', () => {
 
   it('allows skip to the final byte of the buffer', () => {
     const spec = new Spec();
-    
+
     spec.field('count', UInt8)
         .skip(Int8)
         .field('temp', UInt8)
         .skip(UInt32)
-        
+
     expect(() => spec.exec(Buffer.from([0x16, 0x00, 0x7F, 0x00, 0x00, 0x00, 0x01]))).not.toThrowError();
   });
 
   it('supports skip when writing', () => {
     const spec = new Spec();
-    
+
     spec.field('count', UInt8)
         .skip(1)
         .field('temp', UInt8)
@@ -133,7 +133,7 @@ describe('endianness', () => {
         .field('countLE', UInt16)
           .endianness(Mode.BE)
         .exec(Buffer.from([0xFF, 0x30, 0x30, 0xFF]))
-    
+
     expect(result.countBE).toBe(65328);
     expect(result.countLE).toBe(65328);
   });
@@ -145,14 +145,14 @@ describe('endianness', () => {
       .field('countLE', UInt16)
         .endianness(Mode.BE)
       .write({ countBE: 65328, countLE: 65328 })
-  
+
     expect(result).toBeHex('FF3030FF');
   })
 });
 
 describe('storing a field', () => {
   it('does not add to the result', () => {
-    const result = 
+    const result =
       new Spec()
         .field('firstByte', UInt8)
         .store('ignoreMe', UInt8)
@@ -182,14 +182,14 @@ describe('storing a field', () => {
       .store('andMe', UInt32)
       .field('lastByte', UInt8)
       .write({ ignoreMe: 255, andMe: 4294967295, lastByte: 1 })
-    
+
     expect(result).toBeHex('FFFFFFFFFF01');
   })
 })
 
 describe('deriving a field', () => {
   it('creates a new field in the result', () => {
-    const result = 
+    const result =
       new Spec()
         .derive('derivedField', () => 5)
         .exec(Buffer.from([]));
@@ -249,7 +249,7 @@ describe('padding', () => {
         .field('enabled', Bool).pad()
         .field('count', Int8)
         .exec(Buffer.from([0x80, 0x02]))
-    
+
     expect(result.enabled).toBe(true);
     expect(result.count).toBe(2);
   });
@@ -260,49 +260,49 @@ describe('padding', () => {
         .field('enabled', Bool).pad()
         .field('count', Int8)
         .write({ enabled: true, count: 2 })
-    
+
     expect(result).toBeHex('8002');
   });
 
   it('throws an error if trying to write Int from a non-padded position', () => {
-    const spec = 
+    const spec =
       new Spec()
         .field('enabled', Bool)
         .field('count', Int8)
-    
+
     expect(() => spec.write({ enabled: true, count: 2 })).toThrowError(new Error('Buffer position is not at a byte boundary (bit offset 1). Do you need to use pad()?'));
   })
 
   it('does not error if previous bits add up to byte boundary when reading', () => {
-    const spec = 
+    const spec =
       new Spec()
         .field('enabled', Bool)
         .field('days', Bits5)
         .field('frequency', Bits2)
         .field('count', Int8)
-      
+
     expect(() => spec.exec(Buffer.from([0x80, 0x02]))).not.toThrowError(new Error('Buffer position is not at a byte boundary (bit offset 0). Do you need to use pad()?'))
   })
 
   it('does not error if previous bits add up to byte boundary when writing', () => {
-    const spec = 
+    const spec =
       new Spec()
         .field('enabled', Bool)
         .field('days', Bits5)
         .field('frequency', Bits2)
         .field('count', Int8)
-      
+
     expect(() => spec.write({ enabled: true, days: 12, frequency: 2, count: 36 })).not.toThrowError(new Error('Buffer position is not at a byte boundary (bit offset 0). Do you need to use pad()?'))
   })
 })
 
 describe('if', () => {
   it('evaluates conditional block', () => {
-    const messageType1 = 
+    const messageType1 =
       new Spec()
         .field('a1', UInt8)
 
-    const mainSpec = 
+    const mainSpec =
       new Spec()
         .field('type', UInt8)
         .if((r) => r.type === 1, messageType1)
@@ -320,11 +320,11 @@ describe('if', () => {
 
 
   it('evaluates conditional block when writing', () => {
-    const messageType1 = 
+    const messageType1 =
       new Spec()
         .field('a1', UInt8)
 
-    const mainSpec = 
+    const mainSpec =
       new Spec()
         .field('type', UInt8)
         .if((r) => r.type === 1, messageType1)
@@ -340,7 +340,7 @@ describe('if', () => {
 
   it('can accept Spec created inline', () => {
 
-    const mainSpec = 
+    const mainSpec =
       new Spec()
         .field('type', UInt8)
         .if((r) => r.type === 1, new Spec()
@@ -355,7 +355,7 @@ describe('if', () => {
 
   it('maintains a bit offset', () => {
 
-    const mainSpec = 
+    const mainSpec =
       new Spec()
         .field('type', Bits3)
         .if((r) => true, new Spec()
@@ -381,12 +381,12 @@ describe('if', () => {
     const result = mainSpec.write({ type: 5, a1: 14, last: 18 });
 
     expect(result).toBeHex('A1D2');
-  });  
+  });
 })
 
 describe('literal value', () => {
   it('puts a literal string in the output', () => {
-    const spec = 
+    const spec =
       new Spec()
         .field('type', 'install')
 
@@ -396,7 +396,7 @@ describe('literal value', () => {
   });
 
   it('ignores literals when writing', () => {
-    const spec = 
+    const spec =
       new Spec()
         .field('type', 'install')
         .field('one', UInt8)
@@ -407,7 +407,7 @@ describe('literal value', () => {
   });
 
   it('puts a literal number in the output', () => {
-    const spec = 
+    const spec =
       new Spec()
         .field('type', 23)
         .field('float', 3.14)
@@ -419,7 +419,7 @@ describe('literal value', () => {
   });
 
   it('puts a literal boolean in the output', () => {
-    const spec = 
+    const spec =
       new Spec()
         .field('enabled', true)
 
@@ -448,7 +448,7 @@ describe('literal value', () => {
   });
 });
 describe('should be', () => {
-  
+
   it('continues if the values match the expected', () => {
     const spec =
       new Spec()
@@ -492,7 +492,7 @@ describe('should be', () => {
     const spec =
       new Spec()
         .field('bits', Bits3, { shouldBe: 4 })
-      
+
     expect(() => spec.exec(Buffer.from([0x00]))).toThrowError(new Error('Expected bits to be 4 but was 0'));
   })
 
@@ -510,7 +510,7 @@ describe('should be', () => {
 
 describe('switch', () => {
   it('looks up a spec in a table', () => {
-    const specOne = 
+    const specOne =
       new Spec()
         .field('one', UInt8)
 
@@ -542,7 +542,7 @@ describe('switch', () => {
   });
 
   it('looks up a spec during writes', () => {
-    const specOne = 
+    const specOne =
       new Spec()
         .field('one', UInt8)
 
@@ -569,7 +569,7 @@ describe('switch', () => {
   });
 
   it('uses the default option if the lookup does not succeed', () => {
-    const specOne = 
+    const specOne =
       new Spec()
         .field('one', UInt8)
 
@@ -592,11 +592,31 @@ describe('switch', () => {
     expect(result.one).toBeUndefined;
     expect(result.two).toBe(2);
   })
+
+  it('errors if no spec is found', () => {
+    const specOne =
+      new Spec()
+        .field('one', UInt8)
+
+    const specTwo =
+      new Spec()
+        .skip(1)
+        .field('two', UInt8)
+
+    const mainSpec =
+      new Spec()
+        .field('type', UInt8)
+        .switch((r) => r.type, {
+          128: specOne
+        });
+
+    expect(() => mainSpec.exec(Buffer.from([0x05, 0x01, 0x02]))).toThrow('Invalid value for switch: 5');
+  })
 });
 
 describe('loop', () => {
   it('puts sub-spec into a nested property', () => {
-    const loopSpec = 
+    const loopSpec =
       new Spec()
         .loop('nest', 3, new Spec()
           .field('val1', UInt8)
@@ -616,7 +636,7 @@ describe('loop', () => {
   })
 
   it('reads sub-spec from nested properties when writing', () => {
-    const loopSpec = 
+    const loopSpec =
       new Spec()
         .loop('nest', 3, new Spec()
           .field('val1', UInt8)
@@ -629,7 +649,7 @@ describe('loop', () => {
   })
 
   it('does not duplicate values in nested specs', () => {
-    const loopSpec = 
+    const loopSpec =
       new Spec()
         .field('topLevel', UInt8)
         .loop('nest', 3, new Spec()
@@ -648,7 +668,7 @@ describe('loop', () => {
   })
 
   it('can reference variables from outside the loop', () => {
-    const loopSpec = 
+    const loopSpec =
       new Spec()
         .store('var', 10)
         .loop('nest', 2, new Spec()
@@ -668,7 +688,7 @@ describe('loop', () => {
   })
 
   it('can use a result variable for the number of repetitions', () => {
-    const loopSpec = 
+    const loopSpec =
       new Spec()
         .field('arrayLength', UInt8)
         .loop('nest', r => r.arrayLength, new Spec()
@@ -685,7 +705,7 @@ describe('loop', () => {
   })
 
   it('loops until the end of the buffer if function is null', () => {
-    const loopSpec = 
+    const loopSpec =
       new Spec()
         .field('arrayLength', UInt8)
         .loop('nest', null, new Spec()
@@ -704,7 +724,7 @@ describe('loop', () => {
   })
 
   it('errors if looping is incomplete at end of buffer', () => {
-    const loopSpec = 
+    const loopSpec =
       new Spec()
         .field('arrayLength', UInt8)
         .loop('nest', null, new Spec()
@@ -715,7 +735,7 @@ describe('loop', () => {
   })
 
   it('errors if loop variable is not a number', () => {
-    const loopSpec = 
+    const loopSpec =
       new Spec()
         .field('arrayLength', Text, { size: 3 })
         .loop('nest', r => r.arrayLength, new Spec()
@@ -726,7 +746,7 @@ describe('loop', () => {
   })
 
   it('loops over whole array if no loop count specified when writing', () => {
-    const loopSpec = 
+    const loopSpec =
       new Spec()
         .loop('nest', null, new Spec()
           .field('val1', UInt8)
@@ -739,7 +759,7 @@ describe('loop', () => {
   })
 
   it('errors if loop variable is not an integer', () => {
-    const loopSpec = 
+    const loopSpec =
       new Spec()
         .field('arrayLength', Float)
         .loop('nest', r => r.arrayLength, new Spec()
@@ -750,7 +770,7 @@ describe('loop', () => {
   })
 
   it('can be nested', () => {
-    const loopSpec = 
+    const loopSpec =
       new Spec()
         .loop('level1', 2, new Spec()
           .field('l1Size', UInt8)
@@ -775,7 +795,7 @@ describe('loop', () => {
   })
 
   it('can write multiple nesting', () => {
-    const loopSpec = 
+    const loopSpec =
       new Spec()
         .loop('level1', 2, new Spec()
           .field('l1Size', UInt8)
@@ -852,7 +872,7 @@ describe('group', () => {
 describe('tap', () => {
   it('executes the provided code and passes the buffer and current state', () => {
     let fieldOne = null;
-    const tappedSpec = 
+    const tappedSpec =
       new Spec()
         .field('one', UInt8)
         .tap((buffer, readerState) => fieldOne = readerState.result.one)
@@ -865,7 +885,7 @@ describe('tap', () => {
   })
 
   it('can be tapped while writing', () => {
-    const tappedSpec = 
+    const tappedSpec =
       new Spec()
         .field('one', UInt8)
         .tap((buffer, readerState) => buffer.write(UInt8, 255))
