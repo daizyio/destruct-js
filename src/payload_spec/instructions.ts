@@ -148,7 +148,7 @@ export class LookupInstruction extends ValueProducer {
     const otherSpec = this.valueMap[value.toString()] ?? this.valueMap['default'];
 
     if (otherSpec) {
-      return otherSpec.exec(buffer);
+      return otherSpec.exec(buffer, readerState);
     } else {
       throw new Error(`Invalid value for switch: ${value}`);
     }

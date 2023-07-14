@@ -612,6 +612,36 @@ describe('switch', () => {
 
     expect(() => mainSpec.exec(Buffer.from([0x05, 0x01, 0x02]))).toThrow('Invalid value for switch: 5');
   })
+
+  it('switch spec is passed state', () => {
+    const specOne = 
+      new Spec()
+        .field('someValue1', UInt8)
+        .field('someValue2', UInt8)
+        .derive('type1Again', (t) => t.type1)
+        .derive('type2Again', (t) => t.type2);
+
+    const mainSpec = 
+      new Spec()
+        .store('type1', UInt8)
+        .field('type2', UInt8)
+        .switch((r) => r.type2, {
+          9: specOne
+        })
+        .derive('value1', (r) => r.someValue1)
+        .derive('value2', (r) => r.someValue2);
+    
+    const result = mainSpec.read(Buffer.from([0x05, 0x09, 0x04, 0x01]));
+
+    expect(result).toBeTruthy();
+    expect(result.type2).toBe(9);
+    expect(result.someValue1).toBe(4);
+    expect(result.someValue2).toBe(1);
+    expect(result.type1Again).toBe(5);
+    expect(result.type2Again).toBe(9);
+    expect(result.value1).toBe(4);
+    expect(result.value2).toBe(1);
+  })
 });
 
 describe('loop', () => {
