@@ -1,7 +1,7 @@
 {
   "name": "destruct-js",
   "description": "Declarative specifications for parsing binary data from Buffers",
-  "version": "0.2.12",
+  "version": "0.2.13",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "license": "MIT",
